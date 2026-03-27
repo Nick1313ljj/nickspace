@@ -9,18 +9,18 @@
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
 
   :root {
-    --bg: #0d0f12;
-    --surface: #141619;
-    --surface2: #1c1f24;
-    --border: #272b33;
-    --accent: #00d4a0;
-    --accent-dim: rgba(0,212,160,0.12);
-    --blue: #3d9eff;
-    --blue-dim: rgba(61,158,255,0.12);
-    --warn: #ff6b35;
-    --warn-dim: rgba(255,107,53,0.1);
-    --text: #dde1e9;
-    --muted: #5a6170;
+    --bg: #f0f2f5;
+    --surface: #ffffff;
+    --surface2: #e8eaed;
+    --border: #d1d5db;
+    --accent: #00a87a;
+    --accent-dim: rgba(0,168,122,0.1);
+    --blue: #2563eb;
+    --blue-dim: rgba(37,99,235,0.1);
+    --warn: #dc6027;
+    --warn-dim: rgba(220,96,39,0.08);
+    --text: #1a1d23;
+    --muted: #6b7280;
     --mono: 'IBM Plex Mono', monospace;
     --sans: 'IBM Plex Sans', sans-serif;
   }
@@ -40,8 +40,8 @@
     position: fixed;
     inset: 0;
     background-image:
-      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
     background-size: 48px 48px;
     pointer-events: none;
     z-index: 0;
@@ -449,6 +449,107 @@
     border-color: var(--warn);
   }
   .dialog-btns button:hover { opacity: 0.8; }
+
+  /* ── GT Summary Section ── */
+  .gt-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .gt-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .gt-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  /* GT table */
+  .gt-table-wrap {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+  .gt-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 12px;
+    min-width: 500px;
+  }
+  .gt-table thead tr { background: var(--surface2); border-bottom: 1px solid var(--border); }
+  .gt-table th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .gt-table th.num { text-align: right; }
+  .gt-table tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.1s; }
+  .gt-table tbody tr:hover { background: var(--surface2); }
+  .gt-table td { padding: 9px 14px; vertical-align: middle; color: var(--text); white-space: nowrap; }
+  .gt-table td.num { text-align: right; }
+  .gt-table .total-row { background: var(--surface2); border-top: 1px solid var(--border); font-weight: 600; }
+  .gt-table .total-row td { color: var(--accent); }
+  .gt-table .deduct-row td { color: var(--warn); }
+  .gt-table .owe-row { background: rgba(0,212,160,0.06); }
+  .gt-table .owe-row td { color: var(--accent); font-weight: 600; }
+
+  /* WhatsApp preview */
+  .wa-preview {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+    margin-top: 12px;
+  }
+  .wa-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .wa-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .wa-text {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.8;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .btn-copy {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-copy:hover { background: var(--accent-dim); }
 </style>
 </head>
 <body>
@@ -481,7 +582,7 @@
     </div>
 
     <!-- Date check panel -->
-    <div id="dateCheckPanel" style="display:none;margin-bottom:14px;background:var(--bg);border:1px solid var(--border);padding:14px 16px">
+    <div id="dateCheckPanel" style="display:none;margin-bottom:14px;background:var(--surface2);border:1px solid var(--border);padding:14px 16px">
       <div id="dateCheckContent" style="font-family:var(--mono);font-size:12px;line-height:1.9"></div>
     </div>
 
@@ -546,7 +647,7 @@ H-4-2626 (49186)
   <!-- Action bar -->
   <div class="action-bar">
     <button class="btn btn-match" onclick="runMatch()">▶ 开始匹配</button>
-    <button class="btn btn-export" id="btnExport" onclick="exportExcel()" disabled>⬇ 导出 Excel</button>
+    <button class="btn btn-export" id="btnExport" onclick="exportMatchExcel()" disabled>⬇ 导出匹配结果</button>
     <button class="btn btn-sm" onclick="clearPanel('A')">✕ 清空 A 组</button>
     <div class="stat-row" id="statRow" style="display:none">
       <span class="s-total">B库 <em id="sTotal">0</em> 条</span>
@@ -554,7 +655,7 @@ H-4-2626 (49186)
     </div>
   </div>
 
-  <!-- Results -->
+  <!-- Results (匹配) -->
   <div class="results-wrap" id="resultsWrap">
     <div class="section-title">匹配结果</div>
     <div class="table-scroll">
@@ -570,6 +671,42 @@ H-4-2626 (49186)
         </thead>
         <tbody id="resultBody"></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- GT Summary Section -->
+  <div class="gt-section" id="gtSection" style="display:none">
+    <div class="gt-header">
+      <span class="gt-title">A 组 — GT 汇总</span>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">共 <em id="gtCount" style="color:var(--accent);font-style:normal">0</em> 张单据</span>
+      <button class="btn btn-export" style="margin-left:auto;padding:7px 16px;font-size:11px" onclick="exportGT()" id="btnExportGT">⬇ 导出GT表</button>
+    </div>
+
+    <!-- GT Table -->
+    <div class="gt-table-wrap">
+      <table class="gt-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>单据号</th>
+            <th class="num">RM</th>
+            <th class="num">SGD</th>
+            <th class="num">扣</th>
+            <th class="num">扣中字</th>
+            <th class="num">尚欠</th>
+          </tr>
+        </thead>
+        <tbody id="gtBody"></tbody>
+      </table>
+    </div>
+
+    <!-- WhatsApp preview -->
+    <div class="wa-preview">
+      <div class="wa-preview-header">
+        <span class="wa-label">📱 WhatsApp 格式预览</span>
+        <button class="btn-copy" onclick="copyWA()">复制</button>
+      </div>
+      <div class="wa-text" id="waText"></div>
     </div>
   </div>
 
@@ -822,6 +959,7 @@ function parseB(text) {
 // MATCH
 // ════════════════════════════════════════════════════════
 let matchedRows = [];
+let gtRows = [];
 
 function runMatch() {
   const textA = document.getElementById('inputA').value.trim();
@@ -831,8 +969,9 @@ function runMatch() {
   if (!allB.length) { showToast('B 组资料库是空的，请先添加资料'); return; }
 
   const { map: aMap } = parseA(textA);
-  matchedRows = [];
 
+  // ── B matching ──
+  matchedRows = [];
   for (const rec of allB) {
     if (aMap.has(rec.docNo)) {
       const dateFromA = aMap.get(rec.docNo);
@@ -841,18 +980,209 @@ function runMatch() {
     }
   }
 
+  // ── GT extraction from A ──
+  gtRows = parseAforGT(textA);
+
+  // Calculate 扣中字 per docNo from matchedRows
+  const docMatchAmt = {};
+  for (const r of matchedRows) {
+    const amt = parseFloat(r.amount) || 0;
+    if (!docMatchAmt[r.docNo]) docMatchAmt[r.docNo] = 0;
+    docMatchAmt[r.docNo] += amt;
+  }
+
+  // Attach 扣中字 and calculate 尚欠
+  for (const g of gtRows) {
+    const kz = docMatchAmt[g.docNo] || 0;
+    g.kouZhongZi = kz;
+    const mainAmt = g.currency === 'SGD' ? 0 : (g.rm || 0);
+    g.kouAmt = Math.floor(mainAmt / 10);
+    g.owe = mainAmt - g.kouAmt - kz;
+  }
+
   renderTable(matchedRows);
+  renderGT(gtRows);
 
   document.getElementById('sTotal').textContent = allB.length;
   document.getElementById('sMatch').textContent = matchedRows.length;
   document.getElementById('statRow').style.display = 'flex';
   document.getElementById('btnExport').disabled = matchedRows.length === 0;
   document.getElementById('resultsWrap').classList.add('show');
-  showToast(matchedRows.length ? `匹配到 ${matchedRows.length} 条记录` : '没有匹配结果');
+  document.getElementById('gtSection').style.display = gtRows.length ? 'block' : 'none';
+  showToast(matchedRows.length ? `匹配到 ${matchedRows.length} 条，GT ${gtRows.length} 张` : '没有匹配结果');
 }
 
 // ════════════════════════════════════════════════════════
-// RENDER
+// PARSE A FOR GT
+// ════════════════════════════════════════════════════════
+function parseAforGT(text) {
+  const blocks = splitAintoBlocks(text);
+  const rows = [];
+
+  for (const block of blocks) {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+
+    // ── Date: first occurrence only ──
+    let dateStr = '';
+    for (const line of lines) {
+      // Format: "26.03.02 1659" → DD/MM/YY = 02/03/26
+      let m = line.match(/(\d{2})\.(\d{2})\.(\d{2})\s+\d{3,4}/);
+      if (m) { dateStr = `${m[3]}/${m[2]}/${m[1]}`; break; }
+      // Format: "26/03" or "02/03" → DD/MM, year from context
+      m = line.match(/\b(\d{2})\/(\d{2})\b/);
+      if (m && !dateStr) {
+        const yr = new Date().getFullYear().toString().slice(2);
+        dateStr = `${m[1]}/${m[2]}/${yr}`; break;
+      }
+      // Format: "02Mar" → DD/MM/YY
+      m = line.match(/\b(\d{1,2})(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/i);
+      if (m) {
+        const months = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',
+                        jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+        const mo = months[m[2].toLowerCase().slice(0,3)];
+        const yr = new Date().getFullYear().toString().slice(2);
+        dateStr = `${String(m[1]).padStart(2,'0')}/${mo}/${yr}`; break;
+      }
+    }
+
+    // ── Doc number ──
+    let docNo = '';
+    for (const line of lines) {
+      const m = line.match(/\((\d{5})\)/);
+      if (m) { docNo = m[1]; break; }
+    }
+
+    // ── GT amount & currency ──
+    let gtAmt = null;
+    let currency = 'RM';
+    for (const line of lines) {
+      // GT=xx (SGD) or GT=xx
+      let m = line.match(/GT[=:](\d+(?:\.\d+)?)\s*(?:\(SGD\))?/i);
+      if (!m) m = line.match(/T\((\d+(?:\.\d+)?)\)/i);
+      if (m) {
+        gtAmt = parseFloat(m[1]);
+        if (/SGD/i.test(line)) currency = 'SGD';
+        break;
+      }
+    }
+
+    if (dateStr && gtAmt !== null) {
+      rows.push({
+        date: dateStr,
+        docNo,
+        rm: currency === 'RM' ? gtAmt : 0,
+        sgd: currency === 'SGD' ? gtAmt : 0,
+        currency,
+        kouAmt: 0,
+        kouZhongZi: 0,
+        owe: 0,
+      });
+    }
+  }
+
+  return rows;
+}
+
+// Split A text into individual receipt blocks
+// Each block starts at a line matching "YY.MM.DD HHMM"
+function splitAintoBlocks(text) {
+  const lines = text.split('\n');
+  const blocks = [];
+  let current = [];
+
+  for (const line of lines) {
+    const isBlockStart = /\d{2}\.\d{2}\.\d{2}\s+\d{3,4}/.test(line.trim());
+    if (isBlockStart && current.length) {
+      blocks.push(current.join('\n'));
+      current = [];
+    }
+    current.push(line);
+  }
+  if (current.length) blocks.push(current.join('\n'));
+  return blocks.filter(b => b.trim());
+}
+
+// ════════════════════════════════════════════════════════
+// RENDER GT
+// ════════════════════════════════════════════════════════
+function renderGT(rows) {
+  const tbody = document.getElementById('gtBody');
+  tbody.innerHTML = '';
+
+  if (!rows.length) return;
+
+  let totalRM = 0, totalSGD = 0, totalKou = 0, totalKZ = 0, totalOwe = 0;
+
+  for (const r of rows) {
+    totalRM += r.rm;
+    totalSGD += r.sgd;
+    totalKou += r.kouAmt;
+    totalKZ += r.kouZhongZi;
+    totalOwe += r.owe;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:var(--muted)">${r.date}</td>
+      <td style="color:var(--accent)">${r.docNo || '—'}</td>
+      <td class="num">${r.rm ? r.rm : '—'}</td>
+      <td class="num">${r.sgd ? r.sgd : '—'}</td>
+      <td class="num" style="color:var(--warn)">${r.kouAmt ? r.kouAmt : '—'}</td>
+      <td class="num" style="color:var(--warn)">${r.kouZhongZi ? r.kouZhongZi.toFixed(2) : '—'}</td>
+      <td class="num" style="color:var(--accent)">${r.rm ? r.owe.toFixed(2) : '—'}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  // Total row
+  const trTotal = document.createElement('tr');
+  trTotal.className = 'total-row';
+  trTotal.innerHTML = `
+    <td colspan="2">Total</td>
+    <td class="num">${totalRM || '—'}</td>
+    <td class="num">${totalSGD || '—'}</td>
+    <td class="num">${totalKou || '—'}</td>
+    <td class="num">${totalKZ ? totalKZ.toFixed(2) : '—'}</td>
+    <td class="num">${totalOwe ? totalOwe.toFixed(2) : '—'}</td>
+  `;
+  tbody.appendChild(trTotal);
+
+  document.getElementById('gtCount').textContent = rows.length;
+
+  // WhatsApp text
+  renderWA(rows, totalRM, totalSGD);
+}
+
+function renderWA(rows, totalRM, totalSGD) {
+  const pad = (s, n) => String(s).padEnd(n);
+  const padL = (s, n) => String(s).padStart(n);
+
+  let lines = [];
+  lines.push(`Date        RM${totalSGD ? '      SGD' : ''}`);
+  lines.push('─'.repeat(totalSGD ? 26 : 18));
+
+  for (const r of rows) {
+    let line = `${pad(r.date, 12)}`;
+    if (r.rm) line += padL(r.rm, 6);
+    else line += padL('', 6);
+    if (totalSGD) line += r.sgd ? padL(r.sgd, 9) : '';
+    lines.push(line);
+  }
+
+  lines.push('─'.repeat(totalSGD ? 26 : 18));
+  let totalLine = `${pad('Total', 12)}${padL(totalRM || '', 6)}`;
+  if (totalSGD) totalLine += padL(totalSGD, 9);
+  lines.push(totalLine);
+
+  document.getElementById('waText').textContent = lines.join('\n');
+}
+
+function copyWA() {
+  const text = document.getElementById('waText').textContent;
+  navigator.clipboard.writeText(text).then(() => showToast('已复制到剪贴板'));
+}
+
+// ════════════════════════════════════════════════════════
+// RENDER TABLE (匹配结果)
 // ════════════════════════════════════════════════════════
 function renderTable(rows) {
   const tbody = document.getElementById('resultBody');
@@ -877,7 +1207,7 @@ function renderTable(rows) {
 // ════════════════════════════════════════════════════════
 // EXPORT
 // ════════════════════════════════════════════════════════
-function exportExcel() {
+function exportMatchExcel() {
   if (!matchedRows.length) return;
   const wb = XLSX.utils.book_new();
   const data = [['日期', '单据号码', 'B组单据行', '投注类型', '金额 (MYR)']];
@@ -887,8 +1217,38 @@ function exportExcel() {
   const ws = XLSX.utils.aoa_to_sheet(data);
   ws['!cols'] = [{ wch: 14 }, { wch: 10 }, { wch: 28 }, { wch: 18 }, { wch: 12 }];
   XLSX.utils.book_append_sheet(wb, ws, '匹配结果');
-  XLSX.writeFile(wb, `单据匹配_${new Date().toISOString().slice(0,10)}.xlsx`);
-  showToast('Excel 已导出');
+  XLSX.writeFile(wb, `匹配结果_${new Date().toISOString().slice(0,10)}.xlsx`);
+  showToast('匹配结果已导出');
+}
+
+function exportGT() {
+  if (!gtRows.length) return;
+  const wb = XLSX.utils.book_new();
+  const data = [['Date', '单据号', 'RM', 'SGD', '扣', '扣中字', '尚欠']];
+  for (const r of gtRows) {
+    data.push([
+      r.date,
+      r.docNo,
+      r.rm || '',
+      r.sgd || '',
+      r.kouAmt || '',
+      r.kouZhongZi ? parseFloat(r.kouZhongZi.toFixed(2)) : '',
+      r.rm ? parseFloat(r.owe.toFixed(2)) : '',
+    ]);
+  }
+  // Total row
+  const tRM = gtRows.reduce((s,r) => s + r.rm, 0);
+  const tSGD = gtRows.reduce((s,r) => s + r.sgd, 0);
+  const tKou = gtRows.reduce((s,r) => s + r.kouAmt, 0);
+  const tKZ = gtRows.reduce((s,r) => s + r.kouZhongZi, 0);
+  const tOwe = gtRows.reduce((s,r) => s + r.owe, 0);
+  data.push(['Total', '', tRM || '', tSGD || '', tKou || '', parseFloat(tKZ.toFixed(2)) || '', parseFloat(tOwe.toFixed(2)) || '']);
+
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [{ wch: 12 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 6 }, { wch: 10 }, { wch: 10 }];
+  XLSX.utils.book_append_sheet(wb, ws, 'GT汇总');
+  XLSX.writeFile(wb, `GT汇总_${new Date().toISOString().slice(0,10)}.xlsx`);
+  showToast('GT汇总已导出');
 }
 
 // ════════════════════════════════════════════════════════

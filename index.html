@@ -225,6 +225,17 @@
   }
   .panel-a .panel-label { color: var(--accent); }
 
+  /* A panel light blue background */
+  .panel-a {
+    background: #eef4ff;
+    border-color: #bfdbfe;
+  }
+  .panel-a textarea.main-ta {
+    background: #f5f9ff;
+    border-color: #bfdbfe;
+  }
+  .panel-a textarea.main-ta:focus { border-color: var(--blue); }
+
   .panel-hint { font-size: 11px; color: var(--muted); font-family: var(--mono); }
 
   /* small header buttons */
@@ -263,7 +274,6 @@
     transition: border-color 0.2s;
   }
   textarea.main-ta::placeholder { color: var(--muted); }
-  .panel-a textarea.main-ta:focus { border-color: var(--accent); }
 
   .counter {
     margin-top: 7px;
@@ -550,6 +560,59 @@
     transition: background 0.15s;
   }
   .btn-copy:hover { background: var(--accent-dim); }
+  /* ── Output C ── */
+  .outc-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .outc-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .outc-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #7c3aed;
+  }
+  .outc-table-wrap {
+    overflow-x: auto;
+    margin-bottom: 12px;
+  }
+  .outc-table {
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 12px;
+    width: auto;
+  }
+  .outc-table th, .outc-table td {
+    border: 1px solid var(--border);
+    padding: 5px 8px;
+    white-space: nowrap;
+  }
+  .outc-table th {
+    background: var(--surface2);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 600;
+    text-align: center;
+  }
+  .outc-table td { text-align: right; color: var(--text); }
+  .outc-table td.left { text-align: left; }
+  .outc-table .sep-row td { border-top: 2px solid var(--border); background: var(--surface2); }
+  .outc-table .label-row td { font-weight: 600; color: var(--text); background: var(--surface2); }
+  .outc-table .discount-row td { color: var(--warn); }
+  .outc-table .strike-row td { color: var(--blue); }
+  .outc-table .balance-row td { color: var(--accent); font-weight: 700; background: rgba(0,168,122,0.06); }
+  .outc-btns { display: flex; gap: 8px; flex-wrap: wrap; }
 </style>
 </head>
 <body>
@@ -712,7 +775,19 @@ H-4-2626 (49186)
 
 </div>
 
-<!-- Confirm dialog -->
+  <!-- Output C -->
+  <div class="outc-section" id="outcSection" style="display:none">
+    <div class="outc-header">
+      <span class="outc-title">输出 C — 精装汇总表</span>
+      <div class="outc-btns" style="margin-left:auto">
+        <button class="btn btn-export" style="padding:7px 14px;font-size:11px;border-color:#7c3aed;color:#7c3aed" onclick="exportOutC()">⬇ 导出</button>
+        <button class="btn-copy" style="border-color:#7c3aed;color:#7c3aed" onclick="copyOutC()">复制</button>
+      </div>
+    </div>
+    <div class="outc-table-wrap">
+      <table class="outc-table" id="outcTable"></table>
+    </div>
+  </div>
 <div class="overlay" id="overlay">
   <div class="dialog">
     <div class="dialog-title" id="dialogTitle">确认删除</div>
@@ -1002,6 +1077,7 @@ function runMatch() {
 
   renderTable(matchedRows);
   renderGT(gtRows);
+  renderOutC(gtRows);
 
   document.getElementById('sTotal').textContent = allB.length;
   document.getElementById('sMatch').textContent = matchedRows.length;
@@ -1308,6 +1384,215 @@ function showToast(msg) {
   el.textContent = msg;
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ════════════════════════════════════════════════════════
+// OUTPUT C
+// ════════════════════════════════════════════════════════
+
+// Extract winner code from B line: "T-1-2956 (47108)" → "T2956"
+function extractWinnerCode(line) {
+  // Match letter(s) + dash + digit(s) + dash + 4digits
+  const m = line.match(/^([A-Za-z]+)-\d+-(\d{4})\s/);
+  if (m) return m[1].toUpperCase() + m[2];
+  // Fallback: letter + 4 digits anywhere
+  const m2 = line.match(/([A-Za-z])[-–]?\d+[-–](\d{4})/);
+  if (m2) return m2[1].toUpperCase() + m2[2];
+  return '';
+}
+
+// Build strike map: docNo → [ "amount (WinnerCode)", ... ]
+function buildStrikeMap(matchedRows) {
+  const rmMap  = {}; // docNo → [lines]
+  const sgdMap = {}; // docNo → [lines]
+
+  for (const r of matchedRows) {
+    const code = extractWinnerCode(r.line);
+    const amt  = r.amount ? parseFloat(r.amount) : 0;
+    if (!amt) continue;
+    const entry = `${amt % 1 === 0 ? amt : amt.toFixed(2)} (${code || r.docNo})`;
+    // Determine currency from betType or line
+    if (/SGD/i.test(r.betType) || /SGD/i.test(r.line)) {
+      if (!sgdMap[r.docNo]) sgdMap[r.docNo] = [];
+      sgdMap[r.docNo].push(entry);
+    } else {
+      if (!rmMap[r.docNo]) rmMap[r.docNo] = [];
+      rmMap[r.docNo].push(entry);
+    }
+  }
+  return { rmMap, sgdMap };
+}
+
+function renderOutC(rows) {
+  if (!rows.length) return;
+
+  const { rmMap, sgdMap } = buildStrikeMap(matchedRows);
+
+  const totalRM    = rows.reduce((s,r) => s + r.rm, 0);
+  const totalSGD   = rows.reduce((s,r) => s + r.sgd, 0);
+  const grandTotal = totalRM + totalSGD;
+  const discount   = Math.floor(grandTotal / 10);
+  const totalKZ    = rows.reduce((s,r) => s + r.kouZhongZi, 0);
+  const balance    = grandTotal - discount - totalKZ;
+  const hasSGD     = rows.some(r => r.sgd > 0);
+
+  const table = document.getElementById('outcTable');
+  let html = '<thead><tr>';
+  html += '<th style="width:68px">Date</th>';
+  html += '<th style="width:58px">Receipt<br>No.</th>';
+  html += '<th style="width:46px">RM</th>';
+  html += '<th style="width:46px">SGD</th>';
+  html += '<th style="width:90px">RM Strike<br>中字</th>';
+  html += '<th style="width:90px">SGD Strike<br>中字</th>';
+  html += '</tr></thead><tbody>';
+
+  for (const r of rows) {
+    const rmStrike  = (rmMap[r.docNo]  || []).join('\n');
+    const sgdStrike = (sgdMap[r.docNo] || []).join('\n');
+    html += `<tr>
+      <td class="left">${r.date}</td>
+      <td>${r.docNo || '—'}</td>
+      <td>${r.rm || ''}</td>
+      <td>${r.sgd || ''}</td>
+      <td style="white-space:pre-line;text-align:left;color:var(--blue)">${esc(rmStrike)}</td>
+      <td style="white-space:pre-line;text-align:left;color:var(--blue)">${esc(sgdStrike)}</td>
+    </tr>`;
+  }
+
+  // Total row
+  html += `<tr class="sep-row label-row">
+    <td class="left" colspan="2">Total 总数</td>
+    <td>${totalRM || ''}</td>
+    <td>${totalSGD || ''}</td>
+    <td></td><td></td>
+  </tr>`;
+
+  // Discount row
+  html += `<tr class="discount-row label-row">
+    <td class="left" colspan="2">Discount 扣</td>
+    <td>-${discount}</td>
+    <td></td><td></td><td></td>
+  </tr>`;
+
+  // Strike row
+  html += `<tr class="strike-row label-row">
+    <td class="left" colspan="2">Strike 扣中字</td>
+    <td>-${totalKZ ? totalKZ.toFixed(2) : 0}</td>
+    <td></td><td></td><td></td>
+  </tr>`;
+
+  // Balance row — yellow highlight
+  html += `<tr class="balance-row" style="background:#fef08a">
+    <td class="left" colspan="2" style="color:#854d0e;font-weight:700">Balance 尚欠</td>
+    <td style="color:#854d0e;font-weight:700">${balance.toFixed(2)}</td>
+    <td></td><td></td><td></td>
+  </tr>`;
+
+  html += '</tbody>';
+  table.innerHTML = html;
+  document.getElementById('outcSection').style.display = 'block';
+}
+
+function getOutCText() {
+  const rows = gtRows;
+  const { rmMap, sgdMap } = buildStrikeMap(matchedRows);
+  const totalRM    = rows.reduce((s,r) => s + r.rm, 0);
+  const totalSGD   = rows.reduce((s,r) => s + r.sgd, 0);
+  const grandTotal = totalRM + totalSGD;
+  const discount   = Math.floor(grandTotal / 10);
+  const totalKZ    = rows.reduce((s,r) => s + r.kouZhongZi, 0);
+  const balance    = grandTotal - discount - totalKZ;
+
+  const sep = '\t';
+  const nl  = '\n';
+  let out   = '';
+
+  out += ['Date','Receipt No.','RM','SGD','RM Strike 中字','SGD Strike 中字'].join(sep) + nl;
+
+  for (const r of rows) {
+    const rmS  = (rmMap[r.docNo]  || []).join(' / ');
+    const sgdS = (sgdMap[r.docNo] || []).join(' / ');
+    out += [r.date, r.docNo||'', r.rm||'', r.sgd||'', rmS, sgdS].join(sep) + nl;
+  }
+
+  out += ['Total 总数','', totalRM, totalSGD,'',''].join(sep) + nl;
+  out += ['Discount 扣','', `-${discount}`,'','',''].join(sep) + nl;
+  out += ['Strike 扣中字','', `-${totalKZ ? totalKZ.toFixed(2) : 0}`,'','',''].join(sep) + nl;
+  out += ['Balance 尚欠','', balance.toFixed(2),'','',''].join(sep) + nl;
+
+  return out;
+}
+
+function copyOutC() {
+  const text = getOutCText();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)
+      .then(() => showToast('输出C已复制，可直接粘贴到Excel'))
+      .catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast('输出C已复制');
+  } catch(e) {
+    showToast('复制失败，请手动复制');
+  }
+  document.body.removeChild(ta);
+}
+
+function exportOutC() {
+  if (!gtRows.length) return;
+  const rows = gtRows;
+  const { rmMap, sgdMap } = buildStrikeMap(matchedRows);
+  const totalRM    = rows.reduce((s,r) => s + r.rm, 0);
+  const totalSGD   = rows.reduce((s,r) => s + r.sgd, 0);
+  const grandTotal = totalRM + totalSGD;
+  const discount   = Math.floor(grandTotal / 10);
+  const totalKZ    = rows.reduce((s,r) => s + r.kouZhongZi, 0);
+  const balance    = grandTotal - discount - totalKZ;
+
+  const wb   = XLSX.utils.book_new();
+  const data = [['Date','Receipt No.','RM','SGD','RM Strike 中字','SGD Strike 中字']];
+
+  for (const r of rows) {
+    const rmS  = (rmMap[r.docNo]  || []).join('\n');
+    const sgdS = (sgdMap[r.docNo] || []).join('\n');
+    data.push([r.date, r.docNo||'', r.rm||'', r.sgd||'', rmS, sgdS]);
+  }
+  data.push(['Total 总数','', totalRM, totalSGD,'','']);
+  data.push(['Discount 扣','', -discount,'','','']);
+  data.push(['Strike 扣中字','', -(totalKZ||0),'','','']);
+  data.push(['Balance 尚欠','', parseFloat(balance.toFixed(2)),'','','']);
+
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [{wch:10},{wch:11},{wch:7},{wch:7},{wch:16},{wch:16}];
+
+  // Yellow fill for Balance row
+  const balanceRowIdx = data.length; // 1-based row index
+  const balanceCellRef = XLSX.utils.encode_cell({r: balanceRowIdx - 1, c: 0});
+  if (!ws[balanceCellRef]) ws[balanceCellRef] = {};
+
+  // Apply yellow background to balance row cells A-F
+  for (let c = 0; c < 6; c++) {
+    const cellRef = XLSX.utils.encode_cell({r: balanceRowIdx - 1, c});
+    if (!ws[cellRef]) ws[cellRef] = {v:''};
+    ws[cellRef].s = { fill: { fgColor: { rgb: 'FEF08A' } }, font: { bold: true } };
+  }
+
+  XLSX.utils.book_append_sheet(wb, ws, '输出C');
+  XLSX.writeFile(wb, `输出C_${new Date().toISOString().slice(0,10)}.xlsx`);
+  showToast('输出C已导出');
 }
 
 // ── Init ──

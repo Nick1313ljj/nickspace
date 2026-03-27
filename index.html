@@ -475,6 +475,16 @@
       <span class="no-data">（资料库是空的，请在下方添加）</span>
     </div>
 
+    <!-- Check dates button -->
+    <div style="margin-bottom:12px">
+      <button class="hbtn" style="color:var(--accent);border-color:var(--accent)" onclick="toggleDateCheck()">📅 检查日期完整性</button>
+    </div>
+
+    <!-- Date check panel -->
+    <div id="dateCheckPanel" style="display:none;margin-bottom:14px;background:var(--bg);border:1px solid var(--border);padding:14px 16px">
+      <div id="dateCheckContent" style="font-family:var(--mono);font-size:12px;line-height:1.9"></div>
+    </div>
+
     <!-- Add new B data -->
     <div class="add-b-row">
       <textarea id="inputBAdd" placeholder="在此粘贴新的 B 组资料，按「添加到资料库」存入...
@@ -942,6 +952,58 @@ function showToast(msg) {
 
 // ── Init ──
 refreshUI();
+
+// ════════════════════════════════════════════════════════
+// DATE CHECK
+// ════════════════════════════════════════════════════════
+function toggleDateCheck() {
+  const panel = document.getElementById('dateCheckPanel');
+  if (panel.style.display !== 'none') { panel.style.display = 'none'; return; }
+
+  const allRecs = getAllRecords();
+  if (!allRecs.length) { showToast('资料库是空的'); return; }
+
+  // Collect all unique dates
+  const dateSet = new Set();
+  for (const r of allRecs) {
+    if (r.dateB) dateSet.add(r.dateB);
+  }
+
+  // Group dates by month
+  const byMonth = {};
+  for (const d of [...dateSet].sort()) {
+    const mo = d.slice(0, 7); // "2026-03"
+    if (!byMonth[mo]) byMonth[mo] = [];
+    byMonth[mo].push(d);
+  }
+
+  let html = '';
+  for (const [mo, dates] of Object.entries(byMonth).sort()) {
+    const [yr, mn] = mo.split('-');
+    const label = `${yr}年${parseInt(mn)}月`;
+
+    // Find missing dates in this month
+    const daysInMonth = new Date(parseInt(yr), parseInt(mn), 0).getDate();
+    const missing = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      const ds = `${yr}-${mn}-${String(d).padStart(2,'0')}`;
+      if (!dateSet.has(ds)) missing.push(d);
+    }
+
+    html += `<div style="margin-bottom:12px">`;
+    html += `<div style="color:var(--blue);font-weight:600;margin-bottom:4px">${label}</div>`;
+    html += `<div style="color:var(--accent)">✓ 已有：${dates.map(d => d.slice(8).replace(/^0/,'')).join('、')} 日</div>`;
+    if (missing.length) {
+      html += `<div style="color:var(--warn);margin-top:2px">⚠ 缺少：${missing.join('、')} 日</div>`;
+    } else {
+      html += `<div style="color:var(--muted);margin-top:2px">本月日期完整</div>`;
+    }
+    html += `</div>`;
+  }
+
+  document.getElementById('dateCheckContent').innerHTML = html;
+  panel.style.display = 'block';
+}
 </script>
 </body>
 </html>

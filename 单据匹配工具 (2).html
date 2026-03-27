@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>单据匹配工具</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0d0f12;
+    --surface: #141619;
+    --surface2: #1c1f24;
+    --border: #272b33;
+    --accent: #00d4a0;
+    --accent-dim: rgba(0,212,160,0.12);
+    --blue: #3d9eff;
+    --blue-dim: rgba(61,158,255,0.12);
+    --warn: #ff6b35;
+    --warn-dim: rgba(255,107,53,0.1);
+    --text: #dde1e9;
+    --muted: #5a6170;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 28px 16px 80px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap { max-width: 1100px; margin: 0 auto; position: relative; z-index: 1; }
+
+  /* ── Header ── */
+  .header { margin-bottom: 28px; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border: 1px solid rgba(0,212,160,0.35);
+    padding: 4px 12px;
+    margin-bottom: 12px;
+    background: var(--accent-dim);
+  }
+  .badge::before { content: '◆'; font-size: 8px; }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: clamp(20px, 3.5vw, 32px);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  h1 em { font-style: normal; color: var(--accent); }
+
+  .desc {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: var(--mono);
+    line-height: 1.6;
+  }
+
+  /* ── B库管理区 ── */
+  .db-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+
+  .db-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .db-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--blue);
+  }
+
+  .db-total {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .db-total em { color: var(--blue); font-style: normal; font-weight: 600; }
+
+  /* Month tags */
+  .month-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+    min-height: 32px;
+    align-items: center;
+  }
+
+  .month-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text);
+    cursor: default;
+  }
+
+  .month-tag em { font-style: normal; color: var(--blue); font-size: 10px; }
+
+  .month-tag .del-month {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 0 0 0 4px;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  .month-tag .del-month:hover { color: var(--warn); }
+
+  .no-data {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* Add B data area */
+  .add-b-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .add-b-row textarea {
+    flex: 1;
+    min-width: 200px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    padding: 10px 12px;
+    outline: none;
+    resize: vertical;
+    min-height: 100px;
+    transition: border-color 0.2s;
+  }
+  .add-b-row textarea:focus { border-color: var(--blue); }
+  .add-b-row textarea::placeholder { color: var(--muted); }
+
+  .add-b-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  /* ── Input grid ── */
+  .input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  @media(max-width: 720px) { .input-row { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 18px 20px;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .panel-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .panel-a .panel-label { color: var(--accent); }
+
+  .panel-hint { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+
+  /* small header buttons */
+  .hbtn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  .hbtn:last-child { margin-left: auto; }
+  .hbtn:hover { color: var(--warn); border-color: var(--warn); }
+  .hbtn.blue:hover { color: var(--blue); border-color: var(--blue); }
+  .hbtn.green:hover { color: var(--accent); border-color: var(--accent); }
+
+  input[type=file] { display: none; }
+
+  textarea.main-ta {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.65;
+    padding: 14px;
+    resize: vertical;
+    outline: none;
+    min-height: 240px;
+    transition: border-color 0.2s;
+  }
+  textarea.main-ta::placeholder { color: var(--muted); }
+  .panel-a textarea.main-ta:focus { border-color: var(--accent); }
+
+  .counter {
+    margin-top: 7px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-align: right;
+    min-height: 15px;
+  }
+  .panel-a .counter em { color: var(--accent); font-style: normal; }
+
+  /* ── Action bar ── */
+  .action-bar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 22px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-match { background: var(--accent); color: #0d0f12; }
+  .btn-match:hover { opacity: 0.88; }
+  .btn-export { background: transparent; color: var(--blue); border: 1px solid var(--blue); }
+  .btn-export:hover { background: var(--blue-dim); }
+  .btn-export:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-sm {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    font-size: 11px;
+    padding: 10px 14px;
+  }
+  .btn-sm:hover { color: var(--warn); border-color: var(--warn); }
+
+  .stat-row {
+    margin-left: auto;
+    display: flex;
+    gap: 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .stat-row span em { font-style: normal; font-weight: 600; }
+  .stat-row .s-match em { color: var(--accent); }
+  .stat-row .s-total em { color: var(--text); }
+
+  /* ── Results ── */
+  .results-wrap { display: none; }
+  .results-wrap.show { display: block; }
+
+  .section-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .table-scroll {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 12px;
+    min-width: 600px;
+  }
+
+  thead tr { background: var(--surface2); border-bottom: 1px solid var(--border); }
+
+  th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.1s; }
+  tbody tr:hover { background: var(--surface2); }
+
+  td { padding: 9px 14px; vertical-align: middle; color: var(--text); white-space: nowrap; }
+  .td-docno { font-weight: 600; color: var(--accent); }
+  .td-date { color: var(--muted); }
+  .td-amt { text-align: right; color: var(--blue); }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 10px 18px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    z-index: 999;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.25s;
+    pointer-events: none;
+    max-width: 280px;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* ── Confirm dialog ── */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .overlay.show { display: flex; }
+  .dialog {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 24px 28px;
+    max-width: 340px;
+    width: 90%;
+  }
+  .dialog-title {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--warn);
+    margin-bottom: 10px;
+  }
+  .dialog-msg {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+  .dialog-btns { display: flex; gap: 10px; justify-content: flex-end; }
+  .dialog-btns button {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 7px 16px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    transition: all 0.15s;
+  }
+  .dialog-btns .confirm-del {
+    color: var(--warn);
+    border-color: var(--warn);
+  }
+  .dialog-btns button:hover { opacity: 0.8; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="badge">单据匹配系统</div>
+    <h1>单据号码 <em>匹配工具</em></h1>
+    <p class="desc">B 组资料永久保存在本机 · 按月份管理 · A 组支持完整单据或手动5位号码</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       B 组资料库
+  ══════════════════════════════════════════════════ -->
+  <div class="db-section">
+    <div class="db-header">
+      <span class="db-title">B 组 — 资料库</span>
+      <span class="db-total">已储存 <em id="dbTotal">0</em> 条记录，共 <em id="dbMonths">0</em> 个月份</span>
+    </div>
+
+    <!-- Month tags -->
+    <div class="month-list" id="monthList">
+      <span class="no-data">（资料库是空的，请在下方添加）</span>
+    </div>
+
+    <!-- Add new B data -->
+    <div class="add-b-row">
+      <textarea id="inputBAdd" placeholder="在此粘贴新的 B 组资料，按「添加到资料库」存入...
+
+资料会自动按日期分月储存，关闭浏览器也不会消失。
+例：
+(2026-03-26)
+H-4-2626 (49186)
+1 B IBOX
+33.33
+..."></textarea>
+      <div class="add-b-btns">
+        <input type="file" id="fileBAdd" accept=".txt,text/plain" onchange="loadFileToAdd()">
+        <button class="hbtn blue" onclick="document.getElementById('fileBAdd').click()">📂 载入文件</button>
+        <button class="hbtn green" onclick="addToDatabase()" style="border-color:var(--accent);color:var(--accent)">＋ 添加到资料库</button>
+        <button class="hbtn" onclick="document.getElementById('inputBAdd').value='';document.getElementById('fileBAdd').value=''">✕ 清空</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       A 组 + B 组预览（匹配用）
+  ══════════════════════════════════════════════════ -->
+  <div class="input-row">
+    <!-- A 组 -->
+    <div class="panel panel-a">
+      <div class="panel-header">
+        <span class="panel-label">A 组 — 单据来源</span>
+        <span class="panel-hint">完整单据 或 手动5位号码</span>
+        <input type="file" id="fileA" accept=".txt,text/plain" onchange="loadFile('A')">
+        <button class="hbtn blue" onclick="document.getElementById('fileA').click()">📂 文件</button>
+        <button class="hbtn" onclick="clearPanel('A')">✕</button>
+      </div>
+      <textarea class="main-ta" id="inputA" placeholder="两种模式皆可：
+
+【模式一】贴入完整单据（自动提取日期）：
+26.03.02 1659
+(34789)
+...
+
+【模式二】直接输入5位号码（每行一个）：
+34789
+35162
+日期将自动取自 B 组"></textarea>
+      <div class="counter" id="counterA">—</div>
+    </div>
+
+    <!-- B 组预览 -->
+    <div class="panel" style="border-color: rgba(61,158,255,0.3)">
+      <div class="panel-header">
+        <span class="panel-label" style="color:var(--blue)">B 组 — 资料库预览</span>
+      </div>
+      <div id="dbPreview" style="font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.8;min-height:100px">
+        资料库为空
+      </div>
+    </div>
+  </div>
+
+  <!-- Action bar -->
+  <div class="action-bar">
+    <button class="btn btn-match" onclick="runMatch()">▶ 开始匹配</button>
+    <button class="btn btn-export" id="btnExport" onclick="exportExcel()" disabled>⬇ 导出 Excel</button>
+    <button class="btn btn-sm" onclick="clearPanel('A')">✕ 清空 A 组</button>
+    <div class="stat-row" id="statRow" style="display:none">
+      <span class="s-total">B库 <em id="sTotal">0</em> 条</span>
+      <span class="s-match">匹配 <em id="sMatch">0</em></span>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-wrap" id="resultsWrap">
+    <div class="section-title">匹配结果</div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>单据号</th>
+            <th>B 组单据行</th>
+            <th>投注类型</th>
+            <th style="text-align:right">金额 (MYR)</th>
+          </tr>
+        </thead>
+        <tbody id="resultBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Confirm dialog -->
+<div class="overlay" id="overlay">
+  <div class="dialog">
+    <div class="dialog-title" id="dialogTitle">确认删除</div>
+    <div class="dialog-msg" id="dialogMsg">确定要删除这个月份的资料吗？</div>
+    <div class="dialog-btns">
+      <button onclick="closeDialog()">取消</button>
+      <button class="confirm-del" id="dialogConfirm">删除</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// STORAGE  (key: "bdb_YYYY-MM")
+// ════════════════════════════════════════════════════════
+const STORE_PREFIX = 'bdb_';
+
+function getAllMonthKeys() {
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(STORE_PREFIX)) keys.push(k);
+  }
+  return keys.sort();
+}
+
+function getMonthData(monthKey) {
+  // monthKey like "bdb_2026-03"
+  try { return JSON.parse(localStorage.getItem(monthKey)) || []; }
+  catch { return []; }
+}
+
+function saveMonthData(monthKey, records) {
+  localStorage.setItem(monthKey, JSON.stringify(records));
+}
+
+function deleteMonthData(monthKey) {
+  localStorage.removeItem(monthKey);
+}
+
+function getAllRecords() {
+  const all = [];
+  for (const k of getAllMonthKeys()) all.push(...getMonthData(k));
+  return all;
+}
+
+// Month key from dateB string "2026-03-26" → "bdb_2026-03"
+function monthKeyFromDate(dateStr) {
+  if (!dateStr) return null;
+  const m = dateStr.match(/^(\d{4}-\d{2})/);
+  return m ? STORE_PREFIX + m[1] : null;
+}
+
+function monthLabel(monthKey) {
+  // "bdb_2026-03" → "2026年3月"
+  const s = monthKey.replace(STORE_PREFIX, '');
+  const [y, m] = s.split('-');
+  return `${y}年${parseInt(m)}月`;
+}
+
+// ════════════════════════════════════════════════════════
+// UI — Month list & preview
+// ════════════════════════════════════════════════════════
+function refreshUI() {
+  const keys = getAllMonthKeys();
+  const list = document.getElementById('monthList');
+  const preview = document.getElementById('dbPreview');
+  let totalRecs = 0;
+
+  if (keys.length === 0) {
+    list.innerHTML = '<span class="no-data">（资料库是空的，请在下方添加）</span>';
+    preview.textContent = '资料库为空';
+    document.getElementById('dbTotal').textContent = '0';
+    document.getElementById('dbMonths').textContent = '0';
+    return;
+  }
+
+  list.innerHTML = '';
+  let previewLines = [];
+
+  for (const k of keys) {
+    const recs = getMonthData(k);
+    totalRecs += recs.length;
+
+    const tag = document.createElement('span');
+    tag.className = 'month-tag';
+    tag.innerHTML = `${monthLabel(k)} <em>${recs.length}条</em>
+      <button class="del-month" title="删除此月份" onclick="confirmDelete('${k}')">×</button>`;
+    list.appendChild(tag);
+
+    previewLines.push(`▸ ${monthLabel(k)}：${recs.length} 条记录`);
+  }
+
+  preview.innerHTML = previewLines.map(l =>
+    `<div style="color:var(--text)">${esc(l)}</div>`
+  ).join('');
+
+  document.getElementById('dbTotal').textContent = totalRecs;
+  document.getElementById('dbMonths').textContent = keys.length;
+}
+
+// ════════════════════════════════════════════════════════
+// Add to database
+// ════════════════════════════════════════════════════════
+function addToDatabase() {
+  const text = document.getElementById('inputBAdd').value.trim();
+  if (!text) { showToast('请先输入或载入 B 组资料'); return; }
+
+  const records = parseB(text);
+  if (!records.length) { showToast('未识别到任何单据记录，请检查格式'); return; }
+
+  // Group by month
+  const groups = {};
+  let noDateCount = 0;
+  for (const rec of records) {
+    const mk = monthKeyFromDate(rec.dateB);
+    if (!mk) { noDateCount++; continue; }
+    if (!groups[mk]) groups[mk] = [];
+    groups[mk].push(rec);
+  }
+
+  let added = 0;
+  let skipped = 0;
+  for (const [mk, recs] of Object.entries(groups)) {
+    const existing = getMonthData(mk);
+    const existingIds = new Set(existing.map(r => r.docNo + '|' + r.line + '|' + r.betType));
+    const newOnes = recs.filter(r => !existingIds.has(r.docNo + '|' + r.line + '|' + r.betType));
+    skipped += recs.length - newOnes.length;
+    added += newOnes.length;
+    if (newOnes.length) saveMonthData(mk, [...existing, ...newOnes]);
+  }
+
+  document.getElementById('inputBAdd').value = '';
+  document.getElementById('fileBAdd').value = '';
+  refreshUI();
+
+  let msg = `已添加 ${added} 条`;
+  if (skipped) msg += `，跳过 ${skipped} 条重复`;
+  if (noDateCount) msg += `，${noDateCount} 条无法识别日期`;
+  showToast(msg);
+}
+
+// ════════════════════════════════════════════════════════
+// Delete with confirm
+// ════════════════════════════════════════════════════════
+let pendingDeleteKey = null;
+
+function confirmDelete(monthKey) {
+  pendingDeleteKey = monthKey;
+  const recs = getMonthData(monthKey);
+  document.getElementById('dialogTitle').textContent = `删除 ${monthLabel(monthKey)}`;
+  document.getElementById('dialogMsg').textContent =
+    `确定要删除「${monthLabel(monthKey)}」的全部 ${recs.length} 条记录吗？\n此操作无法复原。`;
+  document.getElementById('dialogConfirm').onclick = () => {
+    deleteMonthData(pendingDeleteKey);
+    closeDialog();
+    refreshUI();
+    showToast(`已删除 ${monthLabel(pendingDeleteKey)}`);
+    pendingDeleteKey = null;
+  };
+  document.getElementById('overlay').classList.add('show');
+}
+
+function closeDialog() {
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// Click outside dialog to close
+document.getElementById('overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeDialog();
+});
+
+// ════════════════════════════════════════════════════════
+// PARSERS
+// ════════════════════════════════════════════════════════
+function parseA(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const hasReceiptDate = lines.some(l => /\d{2}\.\d{2}\.\d{2}\s+\d{3,4}/.test(l));
+  const map = new Map();
+
+  if (!hasReceiptDate) {
+    for (const line of lines) {
+      for (const m of line.matchAll(/(?<!\d)(\d{5})(?!\d)/g)) {
+        map.set(m[1], '');
+      }
+    }
+    return { mode: 'manual', map };
+  }
+
+  let currentDate = '';
+  for (const line of lines) {
+    let m = line.match(/(\d{2})\.(\d{2})\.(\d{2})\s+\d{3,4}/);
+    if (m) { currentDate = `20${m[1]}-${m[2]}-${m[3]}`; }
+    m = line.match(/^\[(\d{1,2})\/(\d{1,2}),/);
+    if (m && !currentDate) {
+      const yr = new Date().getFullYear();
+      currentDate = `${yr}-${String(m[1]).padStart(2,'0')}-${String(m[2]).padStart(2,'0')}`;
+    }
+    for (const dm of line.matchAll(/\((\d{5})\)/g)) {
+      if (!map.has(dm[1])) map.set(dm[1], currentDate || '(日期未识别)');
+    }
+  }
+  return { mode: 'receipt', map };
+}
+
+function parseB(text) {
+  const records = [];
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  let currentDateB = '';
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    const dm = line.match(/^\((\d{4}-\d{2}-\d{2})\)$/);
+    if (dm) { currentDateB = dm[1]; i++; continue; }
+
+    const m = line.match(/\((\d{5})\)/);
+    if (m) {
+      const docNo = m[1];
+      let betType = '';
+      if (i + 1 < lines.length) {
+        const next = lines[i + 1];
+        if (!/\(\d{5}\)/.test(next) && !/^\d+\.\d{2}$/.test(next.replace(/,/g, ''))) {
+          betType = next; i++;
+        }
+      }
+      let amount = '';
+      if (i + 1 < lines.length) {
+        const next = lines[i + 1];
+        if (/^\d+\.\d{2}$/.test(next.replace(/,/g, ''))) {
+          amount = next.replace(/,/g, ''); i++;
+        }
+      }
+      records.push({ docNo, line, betType, amount, dateB: currentDateB });
+    }
+    i++;
+  }
+  return records;
+}
+
+// ════════════════════════════════════════════════════════
+// MATCH
+// ════════════════════════════════════════════════════════
+let matchedRows = [];
+
+function runMatch() {
+  const textA = document.getElementById('inputA').value.trim();
+  if (!textA) { showToast('请先输入 A 组单据或号码'); return; }
+
+  const allB = getAllRecords();
+  if (!allB.length) { showToast('B 组资料库是空的，请先添加资料'); return; }
+
+  const { map: aMap } = parseA(textA);
+  matchedRows = [];
+
+  for (const rec of allB) {
+    if (aMap.has(rec.docNo)) {
+      const dateFromA = aMap.get(rec.docNo);
+      const dateA = dateFromA || rec.dateB || '(日期未识别)';
+      matchedRows.push({ dateA, ...rec });
+    }
+  }
+
+  renderTable(matchedRows);
+
+  document.getElementById('sTotal').textContent = allB.length;
+  document.getElementById('sMatch').textContent = matchedRows.length;
+  document.getElementById('statRow').style.display = 'flex';
+  document.getElementById('btnExport').disabled = matchedRows.length === 0;
+  document.getElementById('resultsWrap').classList.add('show');
+  showToast(matchedRows.length ? `匹配到 ${matchedRows.length} 条记录` : '没有匹配结果');
+}
+
+// ════════════════════════════════════════════════════════
+// RENDER
+// ════════════════════════════════════════════════════════
+function renderTable(rows) {
+  const tbody = document.getElementById('resultBody');
+  tbody.innerHTML = '';
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--muted);font-family:var(--mono)">无匹配结果</td></tr>`;
+    return;
+  }
+  for (const r of rows) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="td-date">${r.dateA}</td>
+      <td class="td-docno">${r.docNo}</td>
+      <td>${esc(r.line)}</td>
+      <td style="color:var(--muted)">${esc(r.betType)}</td>
+      <td class="td-amt">${r.amount || '—'}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// EXPORT
+// ════════════════════════════════════════════════════════
+function exportExcel() {
+  if (!matchedRows.length) return;
+  const wb = XLSX.utils.book_new();
+  const data = [['日期', '单据号码', 'B组单据行', '投注类型', '金额 (MYR)']];
+  for (const r of matchedRows) {
+    data.push([r.dateA, r.docNo, r.line, r.betType, r.amount ? parseFloat(r.amount) : '']);
+  }
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [{ wch: 14 }, { wch: 10 }, { wch: 28 }, { wch: 18 }, { wch: 12 }];
+  XLSX.utils.book_append_sheet(wb, ws, '匹配结果');
+  XLSX.writeFile(wb, `单据匹配_${new Date().toISOString().slice(0,10)}.xlsx`);
+  showToast('Excel 已导出');
+}
+
+// ════════════════════════════════════════════════════════
+// FILE LOADERS
+// ════════════════════════════════════════════════════════
+function loadFile(side) {
+  const input = document.getElementById('file' + side);
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('input' + side).value = e.target.result;
+    updateCounterA();
+    showToast(`已载入：${file.name}`);
+    input.value = '';
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function loadFileToAdd() {
+  const input = document.getElementById('fileBAdd');
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('inputBAdd').value = e.target.result;
+    showToast(`已载入：${file.name}，请按「添加到资料库」`);
+    input.value = '';
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+// ════════════════════════════════════════════════════════
+// MISC HELPERS
+// ════════════════════════════════════════════════════════
+document.getElementById('inputA').addEventListener('input', updateCounterA);
+
+function updateCounterA() {
+  const txt = document.getElementById('inputA').value.trim();
+  const el = document.getElementById('counterA');
+  if (!txt) { el.innerHTML = '—'; return; }
+  const { mode, map } = parseA(txt);
+  el.innerHTML = `识别到 <em>${map.size}</em> 个号码（${mode === 'manual' ? '手动号码模式' : '单据模式'}）`;
+}
+
+function clearPanel(side) {
+  document.getElementById('input' + side).value = '';
+  if (side === 'A') document.getElementById('counterA').innerHTML = '—';
+}
+
+function esc(str) {
+  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ── Init ──
+refreshUI();
+</script>
+</body>
+</html>

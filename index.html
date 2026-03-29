@@ -855,7 +855,7 @@ function generateImage() {
   const CELL  = 8;         // inner cell padding
 
   // Column widths (logical px) — wide enough for content
-  const COL = [100, 56, 56, 0]; // date, RM, SGD, strike (auto)
+  const COL = [140, 56, 56, 0]; // date/label, RM, SGD, strike (auto)
 
   // Use offscreen canvas to measure
   const tmpC  = document.createElement('canvas');
@@ -964,20 +964,23 @@ function generateImage() {
     if (s.type === 'strike')   { textColor = '#2563eb'; }
     rowBg(y, bg);
 
-    // English abbreviation — monospace, bold, fixed position
+    // English abbreviation — monospace, bold
     ctx.fillStyle = textColor;
     ctx.font = `bold ${FS}px monospace`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillText(s.en, xs[0] + CELL, y + LH / 2);
 
-    // Chinese label — right-aligned to a fixed anchor point (just before value col)
-    const zhAnchor = xs[1] - 10; // fixed right edge for Chinese text
-    ctx.font = `${ZH_FS}px sans-serif`;
-    ctx.textAlign = 'right';
-    ctx.fillText(s.zh, zhAnchor, y + LH / 2);
+    // Measure EN width to place ZH immediately after
+    const enW = ctx.measureText(s.en).width;
 
-    // Value — monospace, right-aligned in RM column
+    // Chinese label — immediately after EN, no gap, smaller font
+    ctx.font = `${ZH_FS}px sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.fillText(s.zh, xs[0] + CELL + enW, y + LH / 2);
+
+    // Value — right-aligned, but start after EN+ZH combo
+    // Use a fixed anchor well to the right of the label area
     ctx.font = `bold ${FS}px monospace`;
     ctx.textAlign = 'right';
     ctx.fillText(s.val, xs[1] + COL[1] - CELL, y + LH / 2);

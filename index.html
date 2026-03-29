@@ -18,752 +18,328 @@
     --blue: #2563eb;
     --blue-dim: rgba(37,99,235,0.1);
     --warn: #dc6027;
-    --warn-dim: rgba(220,96,39,0.08);
     --text: #1a1d23;
     --muted: #6b7280;
     --mono: 'IBM Plex Mono', monospace;
     --sans: 'IBM Plex Sans', sans-serif;
+    --ali-a: #0ea5e9;   /* Aliapos blue */
+    --ali-b: #f59e0b;   /* Alibaba amber */
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    min-height: 100vh;
-    padding: 28px 16px 80px;
-  }
+  body { background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100vh; padding:20px 14px 80px; }
 
   body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
-    background-size: 48px 48px;
-    pointer-events: none;
-    z-index: 0;
+    content:''; position:fixed; inset:0;
+    background-image: linear-gradient(rgba(0,0,0,0.03) 1px,transparent 1px), linear-gradient(90deg,rgba(0,0,0,0.03) 1px,transparent 1px);
+    background-size:48px 48px; pointer-events:none; z-index:0;
   }
 
-  .wrap { max-width: 1100px; margin: 0 auto; position: relative; z-index: 1; }
+  .wrap { max-width:900px; margin:0 auto; position:relative; z-index:1; }
 
-  /* ── Header ── */
-  .header { margin-bottom: 28px; }
+  /* Header */
+  .header { margin-bottom:20px; }
+  .badge { display:inline-flex; align-items:center; gap:5px; font-family:var(--mono); font-size:10px; color:var(--accent); letter-spacing:.15em; text-transform:uppercase; border:1px solid rgba(0,168,122,.35); padding:3px 10px; margin-bottom:10px; background:var(--accent-dim); }
+  .badge::before { content:'◆'; font-size:7px; }
+  h1 { font-family:var(--mono); font-size:clamp(18px,3.5vw,28px); font-weight:600; letter-spacing:-.02em; }
+  h1 em { font-style:normal; color:var(--accent); }
+  .desc { margin-top:6px; color:var(--muted); font-size:11px; font-family:var(--mono); }
 
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--accent);
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    border: 1px solid rgba(0,212,160,0.35);
-    padding: 4px 12px;
-    margin-bottom: 12px;
-    background: var(--accent-dim);
-  }
-  .badge::before { content: '◆'; font-size: 8px; }
+  /* Sections */
+  .section { background:var(--surface); border:1px solid var(--border); padding:14px 16px; margin-bottom:12px; }
+  .sec-header { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .sec-title { font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; }
 
-  h1 {
-    font-family: var(--mono);
-    font-size: clamp(20px, 3.5vw, 32px);
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-  }
-  h1 em { font-style: normal; color: var(--accent); }
-
-  .desc {
-    margin-top: 8px;
-    color: var(--muted);
-    font-size: 12px;
-    font-family: var(--mono);
-    line-height: 1.6;
-  }
-
-  /* ── B库管理区 ── */
-  .db-section {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 18px 20px;
-    margin-bottom: 16px;
-  }
-
-  .db-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-  }
-
-  .db-title {
-    font-family: var(--mono);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--blue);
-  }
-
-  .db-total {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--muted);
-  }
-  .db-total em { color: var(--blue); font-style: normal; font-weight: 600; }
+  /* DB tabs */
+  .db-tabs { display:flex; gap:6px; margin-bottom:10px; }
+  .db-tab { font-family:var(--mono); font-size:10px; padding:4px 12px; border:1px solid var(--border); background:transparent; cursor:pointer; letter-spacing:.06em; text-transform:uppercase; transition:all .15s; }
+  .db-tab.ali-a { color:var(--ali-a); border-color:var(--ali-a); }
+  .db-tab.ali-b { color:var(--ali-b); border-color:var(--ali-b); }
+  .db-tab.active.ali-a { background:var(--ali-a); color:#fff; }
+  .db-tab.active.ali-b { background:var(--ali-b); color:#fff; }
 
   /* Month tags */
-  .month-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 14px;
-    min-height: 32px;
-    align-items: center;
-  }
+  .month-section { margin-bottom:10px; }
+  .month-section-label { font-family:var(--mono); font-size:10px; color:var(--muted); margin-bottom:5px; letter-spacing:.08em; }
+  .month-list { display:flex; flex-wrap:wrap; gap:6px; min-height:24px; align-items:center; }
+  .month-tag { display:inline-flex; align-items:center; gap:5px; background:var(--surface2); border:1px solid var(--border); padding:3px 8px; font-family:var(--mono); font-size:11px; }
+  .month-tag em { font-style:normal; font-size:10px; }
+  .month-tag.ali-a em { color:var(--ali-a); }
+  .month-tag.ali-b em { color:var(--ali-b); }
+  .del-month { background:none; border:none; color:var(--muted); cursor:pointer; font-size:12px; padding:0 0 0 3px; }
+  .del-month:hover { color:var(--warn); }
+  .no-data { font-family:var(--mono); font-size:11px; color:var(--muted); font-style:italic; }
 
-  .month-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    padding: 4px 10px;
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text);
-    cursor: default;
-  }
+  /* Date check panel */
+  .date-check-panel { display:none; background:var(--surface2); border:1px solid var(--border); padding:12px 14px; margin-bottom:10px; }
+  .date-check-panel .mono { font-family:var(--mono); font-size:11px; line-height:1.9; }
 
-  .month-tag em { font-style: normal; color: var(--blue); font-size: 10px; }
+  /* Textarea */
+  .add-row { display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap; }
+  .add-row textarea { flex:1; min-width:180px; background:var(--bg); border:1px solid var(--border); color:var(--text); font-family:var(--mono); font-size:12px; line-height:1.6; padding:8px 10px; outline:none; resize:vertical; min-height:65px; transition:border-color .2s; }
+  .add-row textarea:focus { border-color:var(--blue); }
+  .add-row textarea::placeholder { color:var(--muted); }
+  .add-btns { display:flex; flex-direction:column; gap:5px; }
+  .add-btns-row { display:flex; gap:5px; flex-wrap:wrap; }
 
-  .month-tag .del-month {
-    background: none;
-    border: none;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 13px;
-    padding: 0 0 0 4px;
-    line-height: 1;
-    transition: color 0.15s;
-  }
-  .month-tag .del-month:hover { color: var(--warn); }
+  /* Panel A */
+  .panel-a { background:#dbeafe; border:1px solid #93c5fd; padding:14px 16px; margin-bottom:12px; }
+  .panel-a textarea { background:#eff6ff; border-color:#93c5fd; }
+  .panel-a textarea:focus { border-color:var(--blue); }
+  .panel-header { display:flex; align-items:center; gap:7px; margin-bottom:10px; flex-wrap:wrap; }
 
-  .no-data {
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--muted);
-    font-style: italic;
-  }
+  /* Buttons */
+  .hbtn { background:transparent; border:1px solid var(--border); color:var(--muted); font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase; padding:3px 9px; cursor:pointer; transition:color .15s,border-color .15s; white-space:nowrap; }
+  .hbtn:hover { color:var(--warn); border-color:var(--warn); }
+  .hbtn.blue:hover { color:var(--blue); border-color:var(--blue); }
+  input[type=file] { display:none; }
 
-  /* Add B data area */
-  .add-b-row {
-    display: flex;
-    gap: 8px;
-    align-items: flex-start;
-    flex-wrap: wrap;
-  }
+  .btn { display:inline-flex; align-items:center; gap:6px; padding:9px 18px; font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; border:none; transition:opacity .15s,transform .1s; white-space:nowrap; }
+  .btn:active { transform:scale(.97); }
+  .btn-match { background:var(--accent); color:#fff; }
+  .btn-match:hover { opacity:.88; }
+  .btn-export { background:transparent; color:var(--blue); border:1px solid var(--blue); }
+  .btn-export:hover { background:var(--blue-dim); }
+  .btn-export:disabled { opacity:.3; cursor:not-allowed; }
+  .btn-sm { background:transparent; color:var(--muted); border:1px solid var(--border); font-size:11px; padding:9px 13px; }
+  .btn-copy { background:transparent; border:1px solid var(--accent); color:var(--accent); font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; padding:4px 10px; cursor:pointer; transition:background .15s; }
+  .btn-copy:hover { background:var(--accent-dim); }
 
-  .add-b-row textarea {
-    flex: 1;
-    min-width: 200px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 12px;
-    line-height: 1.6;
-    padding: 10px 12px;
-    outline: none;
-    resize: vertical;
-    min-height: 100px;
-    transition: border-color 0.2s;
-  }
-  .add-b-row textarea:focus { border-color: var(--blue); }
-  .add-b-row textarea::placeholder { color: var(--muted); }
+  /* Action bar */
+  .action-bar { display:flex; gap:8px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+  .stat-row { margin-left:auto; display:flex; gap:14px; font-family:var(--mono); font-size:11px; color:var(--muted); }
+  .stat-row em { font-style:normal; font-weight:600; color:var(--accent); }
 
-  .add-b-btns {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
+  /* Section title */
+  .section-title { font-family:var(--mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+  .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
 
-  /* ── Input grid ── */
-  .input-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 16px;
-  }
-  @media(max-width: 720px) { .input-row { grid-template-columns: 1fr; } }
-
-  .panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 18px 20px;
-  }
-
-  .panel-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
-    flex-wrap: wrap;
-  }
-
-  .panel-label {
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    font-weight: 600;
-  }
-  .panel-a .panel-label { color: var(--accent); }
-
-  /* A panel light blue background */
-  .panel-a {
-    background: #dbeafe;
-    border-color: #93c5fd;
-  }
-  .panel-a textarea.main-ta {
-    background: #eff6ff;
-    border-color: #93c5fd;
-  }
-  .panel-a textarea.main-ta:focus { border-color: var(--blue); }
-
-  .panel-hint { font-size: 11px; color: var(--muted); font-family: var(--mono); }
-
-  /* small header buttons */
-  .hbtn {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 3px 10px;
-    cursor: pointer;
-    transition: color 0.15s, border-color 0.15s;
-    white-space: nowrap;
-  }
-  .hbtn:last-child { margin-left: auto; }
-  .hbtn:hover { color: var(--warn); border-color: var(--warn); }
-  .hbtn.blue:hover { color: var(--blue); border-color: var(--blue); }
-  .hbtn.green:hover { color: var(--accent); border-color: var(--accent); }
-
-  input[type=file] { display: none; }
-
-  textarea.main-ta {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 12px;
-    line-height: 1.65;
-    padding: 14px;
-    resize: vertical;
-    outline: none;
-    min-height: 80px;
-    transition: border-color 0.2s;
-  }
-  textarea.main-ta::placeholder { color: var(--muted); }
-
-  .counter {
-    margin-top: 7px;
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--muted);
-    text-align: right;
-    min-height: 15px;
-  }
-  .panel-a .counter em { color: var(--accent); font-style: normal; }
-
-  /* ── Action bar ── */
-  .action-bar {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-  }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 10px 22px;
-    font-family: var(--mono);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    cursor: pointer;
-    border: none;
-    transition: opacity 0.15s, transform 0.1s;
-    white-space: nowrap;
-  }
-  .btn:active { transform: scale(0.97); }
-  .btn-match { background: var(--accent); color: #0d0f12; }
-  .btn-match:hover { opacity: 0.88; }
-  .btn-export { background: transparent; color: var(--blue); border: 1px solid var(--blue); }
-  .btn-export:hover { background: var(--blue-dim); }
-  .btn-export:disabled { opacity: 0.3; cursor: not-allowed; }
-  .btn-sm {
-    background: transparent;
-    color: var(--muted);
-    border: 1px solid var(--border);
-    font-size: 11px;
-    padding: 10px 14px;
-  }
-  .btn-sm:hover { color: var(--warn); border-color: var(--warn); }
-
-  .stat-row {
-    margin-left: auto;
-    display: flex;
-    gap: 16px;
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--muted);
-  }
-  .stat-row span em { font-style: normal; font-weight: 600; }
-  .stat-row .s-match em { color: var(--accent); }
-  .stat-row .s-total em { color: var(--text); }
-
-  /* ── Results ── */
-  .results-wrap { display: none; }
-  .results-wrap.show { display: block; }
-
-  .section-title {
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
-  .table-scroll {
-    overflow-x: auto;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    margin-bottom: 20px;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: var(--mono);
-    font-size: 12px;
-    min-width: 600px;
-  }
-
-  thead tr { background: var(--surface2); border-bottom: 1px solid var(--border); }
-
-  th {
-    padding: 10px 14px;
-    text-align: left;
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    font-weight: 600;
-    white-space: nowrap;
-  }
-
-  tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.1s; }
-  tbody tr:hover { background: var(--surface2); }
-
-  td { padding: 9px 14px; vertical-align: middle; color: var(--text); white-space: nowrap; }
-  .td-docno { font-weight: 600; color: var(--accent); }
-  .td-date { color: var(--muted); }
-  .td-amt { text-align: right; color: var(--blue); }
-
-  /* ── Toast ── */
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    right: 20px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    padding: 10px 18px;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--accent);
-    z-index: 999;
-    opacity: 0;
-    transform: translateY(8px);
-    transition: all 0.25s;
-    pointer-events: none;
-    max-width: 280px;
-  }
-  .toast.show { opacity: 1; transform: translateY(0); }
-
-  /* ── Confirm dialog ── */
-  .overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-  }
-  .overlay.show { display: flex; }
-  .dialog {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    padding: 24px 28px;
-    max-width: 340px;
-    width: 90%;
-  }
-  .dialog-title {
-    font-family: var(--mono);
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--warn);
-    margin-bottom: 10px;
-  }
-  .dialog-msg {
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 20px;
-    line-height: 1.6;
-  }
-  .dialog-btns { display: flex; gap: 10px; justify-content: flex-end; }
-  .dialog-btns button {
-    font-family: var(--mono);
-    font-size: 11px;
-    padding: 7px 16px;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    transition: all 0.15s;
-  }
-  .dialog-btns .confirm-del {
-    color: var(--warn);
-    border-color: var(--warn);
-  }
-  .dialog-btns button:hover { opacity: 0.8; }
-
-  /* ── GT Summary Section ── */
-  .gt-section {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 18px 20px;
-    margin-bottom: 16px;
-  }
-  .gt-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-  }
-  .gt-title {
-    font-family: var(--mono);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--accent);
-  }
+  /* Tables */
+  .table-scroll { overflow-x:auto; background:var(--surface); border:1px solid var(--border); margin-bottom:12px; }
+  table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12px; }
+  thead tr { background:var(--surface2); border-bottom:1px solid var(--border); }
+  th { padding:8px 12px; text-align:left; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:600; white-space:nowrap; }
+  th.num { text-align:right; }
+  tbody tr { border-bottom:1px solid rgba(0,0,0,.05); transition:background .1s; }
+  tbody tr:hover { background:var(--surface2); }
+  td { padding:7px 12px; vertical-align:middle; color:var(--text); }
+  td.num { text-align:right; }
+  td.date { color:var(--muted); white-space:nowrap; }
+  td.docno { color:var(--accent); font-weight:600; white-space:nowrap; }
+  td.amt { text-align:right; color:var(--blue); white-space:nowrap; }
 
   /* GT table */
-  .gt-table-wrap {
-    overflow-x: auto;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    margin-bottom: 14px;
-  }
-  .gt-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: var(--mono);
-    font-size: 12px;
-    min-width: 420px;
-  }
-  .gt-table thead tr { background: var(--surface2); border-bottom: 1px solid var(--border); }
-  .gt-table th {
-    padding: 10px 14px;
-    text-align: left;
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    font-weight: 600;
-    white-space: nowrap;
-  }
-  .gt-table th.num { text-align: right; }
-  .gt-table tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.1s; }
-  .gt-table tbody tr:hover { background: var(--surface2); }
-  .gt-table td { padding: 9px 14px; vertical-align: middle; color: var(--text); white-space: nowrap; }
-  .gt-table td.num { text-align: right; }
-  .gt-table .total-row { background: var(--surface2); border-top: 1px solid var(--border); font-weight: 600; }
-  .gt-table .total-row td { color: var(--accent); }
-  .gt-table .deduct-row td { color: var(--warn); }
-  .gt-table .owe-row { background: rgba(0,212,160,0.06); }
-  .gt-table .owe-row td { color: var(--accent); font-weight: 600; }
+  .gt-table th.num { text-align:right; }
+  .gt-table td.num { text-align:right; }
+  .gt-total-row { background:var(--surface2); font-weight:600; border-top:2px solid var(--border); }
+  .gt-total-row td { color:var(--accent); }
 
-  /* WhatsApp preview */
-  .wa-preview {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    padding: 14px 16px;
-    margin-top: 12px;
-  }
-  .wa-preview-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-  }
-  .wa-label {
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .wa-text {
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--text);
-    line-height: 1.8;
-    white-space: pre;
-    overflow-x: auto;
-  }
-  .btn-copy {
-    background: transparent;
-    border: 1px solid var(--accent);
-    color: var(--accent);
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 4px 12px;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .btn-copy:hover { background: var(--accent-dim); }
-  /* ── Output C ── */
-  .outc-section {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 18px 20px;
-    margin-bottom: 16px;
-  }
-  .outc-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-  }
-  .outc-title {
-    font-family: var(--mono);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #7c3aed;
-  }
-  .outc-table-wrap {
-    overflow-x: auto;
-    margin-bottom: 12px;
-  }
-  .outc-table {
-    border-collapse: collapse;
-    font-family: var(--mono);
-    font-size: 12px;
-    width: auto;
-  }
-  .outc-table th, .outc-table td {
-    border: 1px solid var(--border);
-    padding: 5px 8px;
-    white-space: nowrap;
-  }
-  .outc-table th {
-    background: var(--surface2);
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    font-weight: 600;
-    text-align: center;
-  }
-  .outc-table td { text-align: right; color: var(--text); }
-  .outc-table td.left { text-align: left; }
-  .outc-table .sep-row td { border-top: 2px solid var(--border); background: var(--surface2); }
-  .outc-table .label-row td { font-weight: 600; color: var(--text); background: var(--surface2); }
-  .outc-table .discount-row td { color: var(--warn); }
-  .outc-table .strike-row td { color: var(--blue); }
-  .outc-table .balance-row td { color: var(--accent); font-weight: 700; background: rgba(0,168,122,0.06); }
-  .outc-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  /* Output C */
+  .outc-section { background:var(--surface); border:1px solid #c4b5fd; padding:14px 16px; margin-bottom:12px; }
+  .outc-header { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .outc-title { font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#7c3aed; }
+  .outc-table-wrap { overflow-x:auto; margin-bottom:10px; }
+  .outc-table { border-collapse:collapse; font-family:var(--mono); font-size:12px; }
+  .outc-table th, .outc-table td { border:1px solid var(--border); padding:5px 8px; white-space:nowrap; }
+  .outc-table th { background:var(--surface2); font-size:10px; letter-spacing:.07em; color:var(--muted); font-weight:600; text-align:center; }
+  .outc-table td { text-align:right; }
+  .outc-table td.left { text-align:left; }
+  .outc-table .sep-row td { border-top:2px solid var(--border); background:var(--surface2); font-weight:600; }
+  .outc-table .discount-row td { color:var(--warn); font-weight:600; background:var(--surface2); }
+  .outc-table .strike-row td { color:var(--blue); font-weight:600; background:var(--surface2); }
+  .outc-table .balance-row td { background:#fef08a; color:#854d0e; font-weight:700; }
+  .outc-btns { display:flex; gap:5px; flex-wrap:wrap; align-items:center; margin-left:auto; }
+
+  /* Image preview */
+  .img-preview { margin-top:10px; text-align:center; }
+  .img-preview canvas { max-width:100%; border:1px solid var(--border); display:block; margin:0 auto 8px; }
+
+  /* WA preview */
+  .wa-preview { background:#e0f7f7; border:1px solid #a7d8d8; padding:12px 14px; margin-bottom:12px; }
+  .wa-preview-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .wa-label { font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#2d7a7a; }
+  .wa-text { font-family:var(--mono); font-size:12px; color:var(--text); line-height:1.8; white-space:pre; overflow-x:auto; }
+
+  /* Results */
+  .results-section { background:var(--surface); border:1px solid var(--border); padding:14px 16px; margin-bottom:12px; display:none; }
+
+  /* Dialog */
+  .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:100; align-items:center; justify-content:center; }
+  .overlay.show { display:flex; }
+  .dialog { background:var(--surface); border:1px solid var(--border); padding:20px 24px; max-width:320px; width:90%; }
+  .dialog-title { font-family:var(--mono); font-size:13px; font-weight:600; color:var(--warn); margin-bottom:8px; }
+  .dialog-msg { font-family:var(--mono); font-size:12px; color:var(--muted); margin-bottom:18px; line-height:1.6; white-space:pre-line; }
+  .dialog-btns { display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; }
+  .dialog-btns button { font-family:var(--mono); font-size:11px; padding:6px 14px; cursor:pointer; border:1px solid var(--border); background:transparent; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; transition:all .15s; }
+  .dialog-btns .d-ali-a { color:var(--ali-a); border-color:var(--ali-a); }
+  .dialog-btns .d-ali-b { color:var(--ali-b); border-color:var(--ali-b); }
+  .dialog-btns .confirm-del { color:var(--warn); border-color:var(--warn); }
+  .dialog-btns button:hover { opacity:.8; }
+
+  /* Toast */
+  .toast { position:fixed; bottom:22px; right:18px; background:var(--text); border:1px solid var(--border); padding:9px 16px; font-family:var(--mono); font-size:12px; color:#fff; z-index:999; opacity:0; transform:translateY(8px); transition:all .25s; pointer-events:none; max-width:260px; }
+  .toast.show { opacity:1; transform:translateY(0); }
+
+  /* Counter */
+  .counter { margin-top:5px; font-family:var(--mono); font-size:11px; color:var(--muted); text-align:right; }
+  .counter em { color:var(--blue); font-style:normal; font-weight:600; }
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <!-- Header -->
-  <div class="header">
-    <div class="badge">单据匹配系统</div>
-    <h1>单据号码 <em>匹配工具</em></h1>
-    <p class="desc">B 组资料永久保存在本机 · 按月份管理 · A 组支持完整单据或手动5位号码</p>
+<!-- Header -->
+<div class="header">
+  <div class="badge">单据匹配系统</div>
+  <h1>单据号码 <em>匹配工具</em></h1>
+  <p class="desc">中奖资料永久保存在本机 · 两组资料库 · 按月份管理</p>
+</div>
+
+<!-- ══ 中奖资料库 ══ -->
+<div class="section">
+  <div class="sec-header">
+    <span class="sec-title" style="color:var(--accent)">中奖资料库</span>
+    <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">
+      Aliapos <em id="totalA" style="color:var(--ali-a);font-style:normal;font-weight:600">0</em>条 ·
+      Alibaba <em id="totalB" style="color:var(--ali-b);font-style:normal;font-weight:600">0</em>条
+    </span>
+    <button class="hbtn" style="margin-left:auto;color:var(--accent);border-color:var(--accent)" onclick="toggleDateCheck()">📅 检查日期</button>
   </div>
 
-  <!-- ══════════════════════════════════════════════════
-       B 组资料库
-  ══════════════════════════════════════════════════ -->
-  <div class="db-section">
-    <div class="db-header">
-      <span class="db-title">B 组 — 资料库</span>
-      <span class="db-total">已储存 <em id="dbTotal">0</em> 条记录，共 <em id="dbMonths">0</em> 个月份</span>
-      <button class="hbtn" style="margin-left:auto;color:var(--accent);border-color:var(--accent);font-size:10px" onclick="toggleDateCheck()">📅 检查日期</button>
-    </div>
+  <!-- Month display: two groups -->
+  <div class="month-section">
+    <div class="month-section-label" style="color:var(--ali-a)">▸ ALIAPOS</div>
+    <div class="month-list" id="monthListA"><span class="no-data">空</span></div>
+  </div>
+  <div class="month-section">
+    <div class="month-section-label" style="color:var(--ali-b)">▸ ALIBABA</div>
+    <div class="month-list" id="monthListB"><span class="no-data">空</span></div>
+  </div>
 
-    <!-- Month tags -->
-    <div class="month-list" id="monthList">
-      <span class="no-data">（资料库是空的，请在下方添加）</span>
-    </div>
+  <!-- Date check panel -->
+  <div class="date-check-panel" id="dateCheckPanel">
+    <div class="mono" id="dateCheckContent"></div>
+  </div>
 
-    <!-- Date check panel -->
-    <div id="dateCheckPanel" style="display:none;margin-bottom:14px;background:var(--surface2);border:1px solid var(--border);padding:14px 16px">
-      <div id="dateCheckContent" style="font-family:var(--mono);font-size:12px;line-height:1.9"></div>
-    </div>
-
-    <!-- Add new B data -->
-    <div class="add-b-row">
-      <textarea id="inputBAdd" placeholder="在此粘贴 B 组资料，然后按「添加到资料库」存入。资料会自动按日期分月储存，关闭浏览器也不会消失。" style="min-height:70px"></textarea>
-      <div class="add-b-btns">
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <input type="file" id="fileBAdd" accept=".txt,text/plain" onchange="loadFileToAdd()">
-          <button class="hbtn blue" onclick="document.getElementById('fileBAdd').click()">📂 载入文件</button>
-          <button class="hbtn" onclick="addToDatabase()" style="border-color:var(--accent);color:var(--accent)">＋ 添加到资料库</button>
-        </div>
-        <div style="margin-top:8px">
-          <button class="hbtn" onclick="document.getElementById('inputBAdd').value='';document.getElementById('fileBAdd').value=''">✕ 清空</button>
-        </div>
+  <!-- Add data -->
+  <div class="add-row">
+    <textarea id="inputBAdd" placeholder="在此粘贴中奖资料，然后按「添加到资料库」选择要存入哪一组。关闭浏览器也不会消失。"></textarea>
+    <div class="add-btns">
+      <div class="add-btns-row">
+        <input type="file" id="fileBAdd" accept=".txt,text/plain" onchange="loadFileToAdd()">
+        <button class="hbtn blue" onclick="document.getElementById('fileBAdd').click()">📂 载入</button>
+        <button class="hbtn" style="color:var(--accent);border-color:var(--accent)" onclick="promptAddDB()">＋ 添加</button>
+      </div>
+      <div style="margin-top:6px">
+        <button class="hbtn" onclick="document.getElementById('inputBAdd').value='';document.getElementById('fileBAdd').value=''">✕ 清空</button>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- A 组 only, no B preview -->
-  <div class="panel panel-a" style="margin-bottom:16px">
-    <div class="panel-header">
-      <span class="panel-label">A 组 — 单据来源</span>
-      <span class="panel-hint">完整单据 或 手动5位号码</span>
-      <input type="file" id="fileA" accept=".txt,text/plain" onchange="loadFile('A')">
-      <button class="hbtn blue" onclick="document.getElementById('fileA').click()">📂 文件</button>
-      <button class="hbtn" onclick="clearPanel('A')">✕</button>
-    </div>
-    <textarea class="main-ta" id="inputA" style="min-height:120px" placeholder="粘贴完整单据（自动提取日期），或每行一个5位号码（日期取自B组）"></textarea>
-    <div class="counter" id="counterA">—</div>
+<!-- ══ A 组 ══ -->
+<div class="panel-a">
+  <div class="panel-header">
+    <span class="sec-title" style="color:var(--blue)">A 组 — 单据来源</span>
+    <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">完整单据 或 手动5位号码</span>
+    <input type="file" id="fileA" accept=".txt,text/plain" onchange="loadFile('A')">
+    <button class="hbtn" style="margin-left:auto;color:var(--blue);border-color:var(--blue)" onclick="document.getElementById('fileA').click()">📂 文件</button>
+    <button class="hbtn" onclick="clearA()">✕</button>
   </div>
+  <textarea class="main-ta" id="inputA" style="width:100%;background:#eff6ff;border:1px solid #93c5fd;color:var(--text);font-family:var(--mono);font-size:12px;line-height:1.65;padding:10px 12px;resize:vertical;outline:none;min-height:80px;transition:border-color .2s;" placeholder="粘贴完整单据（自动提取日期），或每行一个5位号码"></textarea>
+  <div class="counter" id="counterA">—</div>
+</div>
 
-  <!-- Action bar -->
-  <div class="action-bar">
-    <button class="btn btn-match" onclick="runMatch()">▶ 开始匹配</button>
-    <button class="btn btn-export" id="btnExport" onclick="exportMatchExcel()" disabled>⬇ 导出匹配结果</button>
-    <div class="stat-row" id="statRow" style="display:none">
-      <span class="s-total">B库 <em id="sTotal">0</em> 条</span>
-      <span class="s-match">匹配 <em id="sMatch">0</em></span>
-    </div>
+<!-- ══ Action bar ══ -->
+<div class="action-bar">
+  <button class="btn btn-match" onclick="runMatch()">▶ 开始匹配</button>
+  <button class="btn btn-export" id="btnExport" onclick="exportMatchExcel()" disabled>⬇ 匹配Excel</button>
+  <div class="stat-row" id="statRow" style="display:none">
+    <span>B库 <em id="sTotal">0</em>条</span>
+    <span>匹配 <em id="sMatch">0</em></span>
   </div>
+</div>
 
-  <!-- 1. Output C (first) -->
-  <div class="outc-section" id="outcSection" style="display:none">
-    <div class="outc-header">
-      <span class="outc-title">输出 C — 精装汇总表</span>
-      <div class="outc-btns" style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">
-        <button class="btn btn-export" style="padding:6px 12px;font-size:10px;border-color:#7c3aed;color:#7c3aed" onclick="exportOutC()">⬇ 导出</button>
-        <button class="btn-copy" style="border-color:#7c3aed;color:#7c3aed;font-size:10px;padding:4px 8px" onclick="copyOutC('backtick')">复制A<br><span style="font-size:9px;opacity:0.7">(等宽)</span></button>
-        <button class="btn-copy" style="border-color:#2563eb;color:#2563eb;font-size:10px;padding:4px 8px" onclick="copyOutC('plain')">复制B<br><span style="font-size:9px;opacity:0.7">(空格)</span></button>
-      </div>
-    </div>
-    <div class="outc-table-wrap">
-      <table class="outc-table" id="outcTable"></table>
+<!-- ══ 1. Output C ══ -->
+<div class="outc-section" id="outcSection" style="display:none">
+  <div class="outc-header">
+    <span class="outc-title">输出 C — 精装汇总表</span>
+    <div class="outc-btns">
+      <button class="btn-copy" style="border-color:#7c3aed;color:#7c3aed" onclick="exportOutC()">⬇ Excel</button>
+      <button class="btn-copy" style="border-color:#7c3aed;color:#7c3aed" onclick="generateImage()">📷 图片</button>
+      <button class="btn-copy" style="border-color:#7c3aed;color:#7c3aed" onclick="downloadImage()">⬇ 存图</button>
     </div>
   </div>
-
-  <!-- 2. WhatsApp preview (inside GT section, shown after match) -->
-  <div class="gt-section" id="gtSection" style="display:none">
-    <!-- WhatsApp preview on top -->
-    <div class="wa-preview" style="background:#e0f7f7;border-color:#a7d8d8;margin-bottom:14px">
-      <div class="wa-preview-header">
-        <span class="wa-label" style="color:#2d7a7a">📱 WhatsApp 格式预览</span>
-        <button class="btn-copy" onclick="copyWA()">复制</button>
-      </div>
-      <div class="wa-text" id="waText"></div>
-    </div>
-
-    <!-- 3. Match results -->
-    <div class="results-wrap" id="resultsWrap" style="display:block">
-      <div class="section-title">匹配结果</div>
-      <div class="table-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>日期</th>
-              <th>单据号</th>
-              <th>B 组单据行</th>
-              <th>投注类型</th>
-              <th style="text-align:right">金额 (MYR)</th>
-            </tr>
-          </thead>
-          <tbody id="resultBody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- 4. GT summary (last) -->
-    <div style="margin-top:16px">
-      <div class="gt-header">
-        <span class="gt-title">A 组 — GT 汇总</span>
-        <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">共 <em id="gtCount" style="color:var(--accent);font-style:normal">0</em> 张单据</span>
-        <button class="btn btn-export" style="margin-left:auto;padding:7px 16px;font-size:11px" onclick="exportGT()" id="btnExportGT">⬇ 导出GT表</button>
-      </div>
-      <div class="gt-table-wrap">
-        <table class="gt-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>单据号</th>
-              <th class="num">RM</th>
-              <th class="num">SGD</th>
-              <th class="num">扣</th>
-              <th class="num">扣中字</th>
-              <th class="num">尚欠</th>
-            </tr>
-          </thead>
-          <tbody id="gtBody"></tbody>
-        </table>
-      </div>
-    </div>
+  <div class="outc-table-wrap">
+    <table class="outc-table" id="outcTable"></table>
   </div>
+  <!-- Canvas image preview -->
+  <div class="img-preview" id="imgPreview" style="display:none">
+    <canvas id="outcCanvas"></canvas>
+    <p style="font-family:var(--mono);font-size:11px;color:var(--muted)">长按图片保存 → 直接发送到 WhatsApp</p>
+  </div>
+</div>
+
+<!-- ══ 2. WA preview ══ -->
+<div class="wa-preview" id="waSection" style="display:none">
+  <div class="wa-preview-header">
+    <span class="wa-label">📱 WhatsApp 格式预览</span>
+    <button class="btn-copy" onclick="copyWA()">复制</button>
+  </div>
+  <div class="wa-text" id="waText"></div>
+</div>
+
+<!-- ══ 3. Match results ══ -->
+<div class="results-section" id="resultsSection">
+  <div class="section-title">匹配结果</div>
+  <div class="table-scroll">
+    <table>
+      <thead><tr>
+        <th>日期</th><th>单据号</th><th>中奖资料行</th><th>投注类型</th><th class="num">金额</th><th>来源</th>
+      </tr></thead>
+      <tbody id="resultBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ 4. GT summary ══ -->
+<div class="results-section" id="gtSection">
+  <div class="section-title">A 组 — GT 汇总 <span id="gtCount" style="color:var(--accent);font-style:normal;margin-left:6px"></span></div>
+  <div class="table-scroll">
+    <table class="gt-table">
+      <thead><tr>
+        <th>Date</th><th>单据号</th><th class="num">RM</th><th class="num">SGD</th><th class="num">扣</th><th class="num">扣中字</th><th class="num">尚欠</th>
+      </tr></thead>
+      <tbody id="gtBody"></tbody>
+    </table>
+  </div>
+  <button class="btn-copy" style="margin-top:6px" onclick="exportGT()">⬇ 导出GT表</button>
+</div>
+
 </div><!-- end wrap -->
 
-<!-- Confirm dialog -->
-<div class="overlay" id="overlay">
+<!-- Choose DB dialog -->
+<div class="overlay" id="overlayDB">
   <div class="dialog">
-    <div class="dialog-title" id="dialogTitle">确认删除</div>
-    <div class="dialog-msg" id="dialogMsg">确定要删除这个月份的资料吗？</div>
+    <div class="dialog-title">选择资料库</div>
+    <div class="dialog-msg" id="dialogDBMsg">请选择要添加到哪个资料库：</div>
     <div class="dialog-btns">
-      <button onclick="closeDialog()">取消</button>
-      <button class="confirm-del" id="dialogConfirm">删除</button>
+      <button onclick="closeDialogDB()" class="hbtn">取消</button>
+      <button class="d-ali-a" onclick="doAdd('A')">Aliapos</button>
+      <button class="d-ali-b" onclick="doAdd('B')">Alibaba</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm delete dialog -->
+<div class="overlay" id="overlayDel">
+  <div class="dialog">
+    <div class="dialog-title" id="delTitle">确认删除</div>
+    <div class="dialog-msg" id="delMsg"></div>
+    <div class="dialog-btns">
+      <button onclick="closeDialogDel()">取消</button>
+      <button class="confirm-del" id="delConfirm">删除</button>
     </div>
   </div>
 </div>
@@ -772,253 +348,238 @@
 
 <script>
 // ════════════════════════════════════════════════════════
-// STORAGE  (key: "bdb_YYYY-MM")
+// STORAGE — two prefixes
 // ════════════════════════════════════════════════════════
-const STORE_PREFIX = 'bdb_';
+const PRE = { A: 'ali_a_', B: 'ali_b_' };
 
-function getAllMonthKeys() {
+function getKeys(grp) {
   const keys = [];
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
-    if (k && k.startsWith(STORE_PREFIX)) keys.push(k);
+    if (k && k.startsWith(PRE[grp])) keys.push(k);
   }
   return keys.sort();
 }
 
-function getMonthData(monthKey) {
-  // monthKey like "bdb_2026-03"
-  try { return JSON.parse(localStorage.getItem(monthKey)) || []; }
+function getData(key) {
+  try { return JSON.parse(localStorage.getItem(key)) || []; }
   catch { return []; }
 }
 
-function saveMonthData(monthKey, records) {
-  localStorage.setItem(monthKey, JSON.stringify(records));
+function saveData(key, recs) { localStorage.setItem(key, JSON.stringify(recs)); }
+function delData(key) { localStorage.removeItem(key); }
+
+function mkKey(grp, dateStr) {
+  if (!dateStr) return null;
+  const m = dateStr.match(/^(\d{4}-\d{2})/);
+  return m ? PRE[grp] + m[1] : null;
 }
 
-function deleteMonthData(monthKey) {
-  localStorage.removeItem(monthKey);
+function keyLabel(key) {
+  const s = key.replace(PRE['A'], '').replace(PRE['B'], '');
+  const [y, mo] = s.split('-');
+  return `${y}年${parseInt(mo)}月`;
 }
 
 function getAllRecords() {
   const all = [];
-  for (const k of getAllMonthKeys()) all.push(...getMonthData(k));
+  for (const k of getKeys('A')) getData(k).forEach(r => all.push({...r, _grp:'A'}));
+  for (const k of getKeys('B')) getData(k).forEach(r => all.push({...r, _grp:'B'}));
   return all;
 }
 
-// Month key from dateB string "2026-03-26" → "bdb_2026-03"
-function monthKeyFromDate(dateStr) {
-  if (!dateStr) return null;
-  const m = dateStr.match(/^(\d{4}-\d{2})/);
-  return m ? STORE_PREFIX + m[1] : null;
-}
-
-function monthLabel(monthKey) {
-  // "bdb_2026-03" → "2026年3月"
-  const s = monthKey.replace(STORE_PREFIX, '');
-  const [y, m] = s.split('-');
-  return `${y}年${parseInt(m)}月`;
-}
-
 // ════════════════════════════════════════════════════════
-// UI — Month list & preview
+// UI — refresh month tags
 // ════════════════════════════════════════════════════════
 function refreshUI() {
-  const keys = getAllMonthKeys();
-  const list = document.getElementById('monthList');
-  let totalRecs = 0;
-
-  if (keys.length === 0) {
-    list.innerHTML = '<span class="no-data">（资料库是空的，请在下方添加）</span>';
-    document.getElementById('dbTotal').textContent = '0';
-    document.getElementById('dbMonths').textContent = '0';
-    return;
-  }
-
-  list.innerHTML = '';
-  for (const k of keys) {
-    const recs = getMonthData(k);
-    totalRecs += recs.length;
-    const tag = document.createElement('span');
-    tag.className = 'month-tag';
-    tag.innerHTML = `${monthLabel(k)} <em>${recs.length}条</em>
-      <button class="del-month" title="删除此月份" onclick="confirmDelete('${k}')">×</button>`;
-    list.appendChild(tag);
-  }
-
-  document.getElementById('dbTotal').textContent = totalRecs;
-  document.getElementById('dbMonths').textContent = keys.length;
+  ['A','B'].forEach(grp => {
+    const listId = grp === 'A' ? 'monthListA' : 'monthListB';
+    const totalId = grp === 'A' ? 'totalA' : 'totalB';
+    const keys = getKeys(grp);
+    const list = document.getElementById(listId);
+    let total = 0;
+    if (!keys.length) {
+      list.innerHTML = '<span class="no-data">空</span>';
+    } else {
+      list.innerHTML = '';
+      keys.forEach(k => {
+        const recs = getData(k);
+        total += recs.length;
+        const tag = document.createElement('span');
+        tag.className = `month-tag ali-${grp.toLowerCase()}`;
+        tag.innerHTML = `${keyLabel(k)} <em>${recs.length}条</em> <button class="del-month" onclick="confirmDel('${grp}','${k}')">×</button>`;
+        list.appendChild(tag);
+      });
+    }
+    document.getElementById(totalId).textContent = total;
+  });
 }
 
 // ════════════════════════════════════════════════════════
-// Add to database
+// Add to database — prompt
 // ════════════════════════════════════════════════════════
-function addToDatabase() {
+let _pendingText = '';
+
+function promptAddDB() {
   const text = document.getElementById('inputBAdd').value.trim();
-  if (!text) { showToast('请先输入或载入 B 组资料'); return; }
+  if (!text) { showToast('请先输入或载入资料'); return; }
+  const recs = parseB(text);
+  if (!recs.length) { showToast('未识别到任何记录，请检查格式'); return; }
+  _pendingText = text;
+  const cnt = recs.length;
+  document.getElementById('dialogDBMsg').textContent = `识别到 ${cnt} 条记录，请选择资料库：`;
+  document.getElementById('overlayDB').classList.add('show');
+}
 
-  const records = parseB(text);
-  if (!records.length) { showToast('未识别到任何单据记录，请检查格式'); return; }
-
-  // Group by month
+function doAdd(grp) {
+  closeDialogDB();
+  const recs = parseB(_pendingText);
   const groups = {};
-  let noDateCount = 0;
-  for (const rec of records) {
-    const mk = monthKeyFromDate(rec.dateB);
-    if (!mk) { noDateCount++; continue; }
-    if (!groups[mk]) groups[mk] = [];
-    groups[mk].push(rec);
+  let noDate = 0;
+  for (const r of recs) {
+    const k = mkKey(grp, r.dateB);
+    if (!k) { noDate++; continue; }
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(r);
   }
-
-  let added = 0;
-  let skipped = 0;
-  for (const [mk, recs] of Object.entries(groups)) {
-    const existing = getMonthData(mk);
-    const existingIds = new Set(existing.map(r => r.docNo + '|' + r.line + '|' + r.betType));
-    const newOnes = recs.filter(r => !existingIds.has(r.docNo + '|' + r.line + '|' + r.betType));
-    skipped += recs.length - newOnes.length;
+  let added = 0, skipped = 0;
+  for (const [k, rs] of Object.entries(groups)) {
+    const existing = getData(k);
+    const ids = new Set(existing.map(r => r.docNo+'|'+r.line+'|'+r.betType));
+    const newOnes = rs.filter(r => !ids.has(r.docNo+'|'+r.line+'|'+r.betType));
+    skipped += rs.length - newOnes.length;
     added += newOnes.length;
-    if (newOnes.length) saveMonthData(mk, [...existing, ...newOnes]);
+    if (newOnes.length) saveData(k, [...existing, ...newOnes]);
   }
-
   document.getElementById('inputBAdd').value = '';
   document.getElementById('fileBAdd').value = '';
+  _pendingText = '';
   refreshUI();
-
-  let msg = `已添加 ${added} 条`;
+  let msg = `已添加 ${added} 条到 ${grp==='A'?'Aliapos':'Alibaba'}`;
   if (skipped) msg += `，跳过 ${skipped} 条重复`;
-  if (noDateCount) msg += `，${noDateCount} 条无法识别日期`;
+  if (noDate) msg += `，${noDate} 条无日期`;
   showToast(msg);
 }
 
-// ════════════════════════════════════════════════════════
-// Delete with confirm
-// ════════════════════════════════════════════════════════
-let pendingDeleteKey = null;
+function closeDialogDB() { document.getElementById('overlayDB').classList.remove('show'); }
+document.getElementById('overlayDB').addEventListener('click', e => { if (e.target===document.getElementById('overlayDB')) closeDialogDB(); });
 
-function confirmDelete(monthKey) {
-  pendingDeleteKey = monthKey;
-  const recs = getMonthData(monthKey);
-  document.getElementById('dialogTitle').textContent = `删除 ${monthLabel(monthKey)}`;
-  document.getElementById('dialogMsg').textContent =
-    `确定要删除「${monthLabel(monthKey)}」的全部 ${recs.length} 条记录吗？\n此操作无法复原。`;
-  document.getElementById('dialogConfirm').onclick = () => {
-    deleteMonthData(pendingDeleteKey);
-    closeDialog();
-    refreshUI();
-    showToast(`已删除 ${monthLabel(pendingDeleteKey)}`);
-    pendingDeleteKey = null;
-  };
-  document.getElementById('overlay').classList.add('show');
+// ════════════════════════════════════════════════════════
+// Delete
+// ════════════════════════════════════════════════════════
+let _delGrp, _delKey;
+
+function confirmDel(grp, key) {
+  _delGrp = grp; _delKey = key;
+  const recs = getData(key);
+  document.getElementById('delTitle').textContent = `删除 ${keyLabel(key)} (${grp==='A'?'Aliapos':'Alibaba'})`;
+  document.getElementById('delMsg').textContent = `确定删除全部 ${recs.length} 条记录？\n此操作无法复原。`;
+  document.getElementById('delConfirm').onclick = () => { delData(_delKey); closeDialogDel(); refreshUI(); showToast('已删除'); };
+  document.getElementById('overlayDel').classList.add('show');
 }
 
-function closeDialog() {
-  document.getElementById('overlay').classList.remove('show');
-}
+function closeDialogDel() { document.getElementById('overlayDel').classList.remove('show'); }
+document.getElementById('overlayDel').addEventListener('click', e => { if (e.target===document.getElementById('overlayDel')) closeDialogDel(); });
 
-// Click outside dialog to close
-document.getElementById('overlay').addEventListener('click', function(e) {
-  if (e.target === this) closeDialog();
-});
+// ════════════════════════════════════════════════════════
+// Date check
+// ════════════════════════════════════════════════════════
+function toggleDateCheck() {
+  const panel = document.getElementById('dateCheckPanel');
+  if (panel.style.display === 'block') { panel.style.display = 'none'; return; }
+  const allRecs = getAllRecords();
+  if (!allRecs.length) { showToast('资料库是空的'); return; }
+
+  let html = '';
+  ['A','B'].forEach(grp => {
+    const recs = getAllRecords().filter(r => r._grp === grp);
+    if (!recs.length) return;
+    const dateSet = new Set(recs.map(r => r.dateB).filter(Boolean));
+    const byMonth = {};
+    [...dateSet].sort().forEach(d => {
+      const mo = d.slice(0,7);
+      if (!byMonth[mo]) byMonth[mo] = [];
+      byMonth[mo].push(d);
+    });
+    const color = grp === 'A' ? 'var(--ali-a)' : 'var(--ali-b)';
+    const name = grp === 'A' ? 'Aliapos' : 'Alibaba';
+    html += `<div style="font-weight:600;color:${color};margin-bottom:4px">▸ ${name}</div>`;
+    for (const [mo, dates] of Object.entries(byMonth).sort()) {
+      const [y, mn] = mo.split('-');
+      const days = new Date(+y, +mn, 0).getDate();
+      const missing = [];
+      for (let d = 1; d <= days; d++) {
+        if (!dateSet.has(`${y}-${mn}-${String(d).padStart(2,'0')}`)) missing.push(d);
+      }
+      html += `<div style="margin-bottom:8px;padding-left:8px">`;
+      html += `<div style="color:var(--text);font-weight:600">${y}年${parseInt(mn)}月</div>`;
+      html += `<div style="color:var(--accent)">✓ ${dates.map(d=>d.slice(8).replace(/^0/,'')).join('、')} 日</div>`;
+      if (missing.length) html += `<div style="color:var(--warn)">⚠ 缺少：${missing.join('、')} 日</div>`;
+      else html += `<div style="color:var(--muted)">本月完整</div>`;
+      html += `</div>`;
+    }
+  });
+  document.getElementById('dateCheckContent').innerHTML = html;
+  panel.style.display = 'block';
+}
 
 // ════════════════════════════════════════════════════════
 // PARSERS
 // ════════════════════════════════════════════════════════
 function parseA(text) {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  const hasReceiptDate = lines.some(l =>
-    /\d{2}\.\d{2}\.\d{2}\s+\d{3,4}/.test(l) || /\{(\d{4})\}/.test(l)
-  );
+  const hasDate = lines.some(l => /\d{2}\.\d{2}\.\d{2}\s+\d{3,4}/.test(l) || /\{(\d{4})\}/.test(l));
   const map = new Map();
 
-  if (!hasReceiptDate) {
-    for (const line of lines) {
-      for (const m of line.matchAll(/(?<!\d)(\d{5})(?!\d)/g)) {
+  if (!hasDate) {
+    for (const line of lines)
+      for (const m of line.matchAll(/(?<!\d)(\d{5})(?!\d)/g))
         map.set(m[1], '');
-      }
-    }
-    return { mode: 'manual', map };
+    return { mode:'manual', map };
   }
 
-  let currentDate = '';
+  let cur = '';
   for (const line of lines) {
-    // TT format: "26.03.02 1659"
     let m = line.match(/(\d{2})\.(\d{2})\.(\d{2})\s+\d{3,4}/);
-    if (m) { currentDate = `20${m[1]}-${m[2]}-${m[3]}`; }
-
-    // S88 format: {0222} → 2026-02-22
+    if (m) { cur = `20${m[1]}-${m[2]}-${m[3]}`; }
     m = line.match(/\{(\d{2})(\d{2})\}/);
-    if (m) {
-      const yr = new Date().getFullYear();
-      currentDate = `${yr}-${m[1]}-${m[2]}`;
-    }
-
-    // WhatsApp header
+    if (m) { cur = `${new Date().getFullYear()}-${m[1]}-${m[2]}`; }
     m = line.match(/^\[(\d{1,2})\/(\d{1,2}),/);
-    if (m && !currentDate) {
-      const yr = new Date().getFullYear();
-      currentDate = `${yr}-${String(m[1]).padStart(2,'0')}-${String(m[2]).padStart(2,'0')}`;
-    }
-
-    for (const dm of line.matchAll(/\((\d{5})\)/g)) {
-      if (!map.has(dm[1])) map.set(dm[1], currentDate || '(日期未识别)');
-    }
+    if (m && !cur) { const yr=new Date().getFullYear(); cur=`${yr}-${String(m[1]).padStart(2,'0')}-${String(m[2]).padStart(2,'0')}`; }
+    for (const dm of line.matchAll(/\((\d{5})\)/g))
+      if (!map.has(dm[1])) map.set(dm[1], cur||'(未识别)');
   }
-  return { mode: 'receipt', map };
+  return { mode:'receipt', map };
 }
 
 function parseB(text) {
   const records = [];
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  let currentDateB = '';
-
+  let curDate = '';
   let i = 0;
   while (i < lines.length) {
-    let line = lines[i];
+    const line = lines[i];
+    // ISO date in parens anywhere in line
+    let dm = line.match(/\((\d{4}-\d{2}-\d{2})\)/);
+    if (dm) { curDate = dm[1]; i++; continue; }
+    // Standalone ISO date
+    dm = line.match(/^(\d{4}-\d{2}-\d{2})$/);
+    if (dm) { curDate = dm[1]; i++; continue; }
 
-    // ── Date detection ──────────────────────────────────────────────────────
-
-    // Format 1: standalone "(2026-02-01)" on its own line
-    let dm = line.match(/^\((\d{4}-\d{2}-\d{2})\)$/);
-    if (dm) { currentDateB = dm[1]; i++; continue; }
-
-    // Format 2: WhatsApp header "[01/03, 09:16] Name: (2026-02-01)"
-    // Extract the ISO date from anywhere in the line
-    dm = line.match(/\((\d{4}-\d{2}-\d{2})\)/);
-    if (dm) {
-      currentDateB = dm[1];
-      // Strip the WhatsApp prefix so the rest of parsing isn't confused
-      // The actual receipt data starts on the NEXT line after this header
-      i++; continue;
-    }
-
-    // Format 3: WhatsApp header with date like "[01/03, 09:16]" — fallback
-    // (only use if no ISO date found yet)
-    dm = line.match(/^\[(\d{1,2})\/(\d{2}),/);
-    if (dm && !currentDateB) {
-      const yr = new Date().getFullYear();
-      currentDateB = `${yr}-${dm[2]}-${String(dm[1]).padStart(2,'0')}`;
-      i++; continue;
-    }
-
-    // ── Record detection ─────────────────────────────────────────────────────
     const m = line.match(/\((\d{5})\)/);
     if (m) {
       const docNo = m[1];
       let betType = '';
-      if (i + 1 < lines.length) {
-        const next = lines[i + 1];
-        if (!/\(\d{5}\)/.test(next) && !/^\d+\.\d{2}$/.test(next.replace(/,/g, ''))) {
-          betType = next; i++;
-        }
+      if (i+1 < lines.length) {
+        const next = lines[i+1];
+        if (!/\(\d{5}\)/.test(next) && !/^\d+\.\d{2}$/.test(next.replace(/,/g,''))) { betType=next; i++; }
       }
       let amount = '';
-      if (i + 1 < lines.length) {
-        const next = lines[i + 1];
-        if (/^\d+\.\d{2}$/.test(next.replace(/,/g, ''))) {
-          amount = next.replace(/,/g, ''); i++;
-        }
+      if (i+1 < lines.length) {
+        const next = lines[i+1];
+        if (/^\d+\.\d{2}$/.test(next.replace(/,/g,''))) { amount=next.replace(/,/g,''); i++; }
       }
-      records.push({ docNo, line, betType, amount, dateB: currentDateB });
+      records.push({ docNo, line, betType, amount, dateB:curDate });
     }
     i++;
   }
@@ -1026,261 +587,331 @@ function parseB(text) {
 }
 
 // ════════════════════════════════════════════════════════
+// PARSE A FOR GT
+// ════════════════════════════════════════════════════════
+function splitBlocks(text) {
+  const lines = text.split('\n');
+  const blocks = []; let cur = [];
+  for (const line of lines) {
+    const t = line.trim();
+    if ((/\d{2}\.\d{2}\.\d{2}\s+\d{3,4}/.test(t) || /^\[S88\]/.test(t)) && cur.length) {
+      blocks.push(cur.join('\n')); cur = [];
+    }
+    cur.push(line);
+  }
+  if (cur.length) blocks.push(cur.join('\n'));
+  return blocks.filter(b => b.trim());
+}
+
+function parseAforGT(text) {
+  const rows = [];
+  for (const block of splitBlocks(text)) {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+    let dateStr = '';
+    for (const line of lines) {
+      let m = line.match(/(\d{2})\.(\d{2})\.(\d{2})\s+\d{3,4}/);
+      if (m) { dateStr=`${m[3]}/${m[2]}/${m[1]}`; break; }
+      m = line.match(/\{(\d{2})(\d{2})\}/);
+      if (m) { const yr=new Date().getFullYear().toString().slice(2); dateStr=`${m[2]}/${m[1]}/${yr}`; break; }
+      m = line.match(/\b(\d{2})\/(\d{2})\b/);
+      if (m && !dateStr) { const yr=new Date().getFullYear().toString().slice(2); dateStr=`${m[1]}/${m[2]}/${yr}`; break; }
+      m = line.match(/\b(\d{1,2})(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/i);
+      if (m) {
+        const mos={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+        const mo=mos[m[2].toLowerCase().slice(0,3)]; const yr=new Date().getFullYear().toString().slice(2);
+        dateStr=`${String(m[1]).padStart(2,'0')}/${mo}/${yr}`; break;
+      }
+    }
+    let docNo='';
+    for (const line of lines) { const m=line.match(/\((\d{5})\)/); if (m){docNo=m[1];break;} }
+    let gtAmt=null, currency='RM';
+    for (const line of lines) {
+      let m=line.match(/GT[=:](\d+(?:\.\d+)?)/i);
+      if (!m) m=line.match(/T\((\d+(?:\.\d+)?)\)/i);
+      if (m) { gtAmt=parseFloat(m[1]); if (/SGD/i.test(line)) currency='SGD'; break; }
+    }
+    if (dateStr && gtAmt!==null) {
+      rows.push({ date:dateStr, docNo, rm:currency==='RM'?gtAmt:0, sgd:currency==='SGD'?gtAmt:0, currency, kouAmt:0, kouZhongZi:0, owe:0 });
+    }
+  }
+  return rows;
+}
+
+// ════════════════════════════════════════════════════════
 // MATCH
 // ════════════════════════════════════════════════════════
-let matchedRows = [];
-let gtRows = [];
+let matchedRows=[], gtRows=[];
 
 function runMatch() {
   const textA = document.getElementById('inputA').value.trim();
-  if (!textA) { showToast('请先输入 A 组单据或号码'); return; }
-
+  if (!textA) { showToast('请先输入 A 组单据'); return; }
   const allB = getAllRecords();
-  if (!allB.length) { showToast('B 组资料库是空的，请先添加资料'); return; }
+  if (!allB.length) { showToast('中奖资料库是空的'); return; }
 
-  const { map: aMap } = parseA(textA);
+  const {map:aMap} = parseA(textA);
+  gtRows = parseAforGT(textA);
 
-  // ── B matching ──
   matchedRows = [];
   for (const rec of allB) {
     if (aMap.has(rec.docNo)) {
       const dateFromA = aMap.get(rec.docNo);
-      const dateA = dateFromA || rec.dateB || '(日期未识别)';
+      const dateA = dateFromA || rec.dateB || '(未识别)';
       matchedRows.push({ dateA, ...rec });
     }
   }
 
-  // ── GT extraction from A ──
-  gtRows = parseAforGT(textA);
+  // Sort by date
+  matchedRows.sort((a,b) => a.dateA.localeCompare(b.dateA));
 
-  // Calculate 扣中字 per docNo from matchedRows
-  const docMatchAmt = {};
+  // Build docMatchAmt
+  const docAmt = {};
   for (const r of matchedRows) {
-    const amt = parseFloat(r.amount) || 0;
-    if (!docMatchAmt[r.docNo]) docMatchAmt[r.docNo] = 0;
-    docMatchAmt[r.docNo] += amt;
+    const amt = parseFloat(r.amount)||0;
+    if (!docAmt[r.docNo]) docAmt[r.docNo]=0;
+    docAmt[r.docNo]+=amt;
   }
-
-  // Attach 扣中字 and calculate 尚欠
   for (const g of gtRows) {
-    const kz = docMatchAmt[g.docNo] || 0;
-    g.kouZhongZi = kz;
-    const mainAmt = g.currency === 'SGD' ? 0 : (g.rm || 0);
-    g.kouAmt = Math.floor(mainAmt / 10);
-    g.owe = mainAmt - g.kouAmt - kz;
+    const kz=docAmt[g.docNo]||0;
+    g.kouZhongZi=kz;
+    g.kouAmt=Math.floor((g.rm||0)/10);
+    g.owe=(g.rm||0)-g.kouAmt-kz;
   }
 
-  renderTable(matchedRows);
+  renderMatchTable(matchedRows);
   renderGT(gtRows);
   renderOutC(gtRows);
+  renderWA(gtRows);
 
-  document.getElementById('sTotal').textContent = allB.length;
-  document.getElementById('sMatch').textContent = matchedRows.length;
-  document.getElementById('statRow').style.display = 'flex';
-  document.getElementById('btnExport').disabled = matchedRows.length === 0;
-  document.getElementById('gtSection').style.display = 'block';
-  document.getElementById('outcSection').style.display = gtRows.length ? 'block' : 'none';
-  showToast(matchedRows.length ? `匹配到 ${matchedRows.length} 条，GT ${gtRows.length} 张` : '没有匹配结果');
+  document.getElementById('sTotal').textContent=allB.length;
+  document.getElementById('sMatch').textContent=matchedRows.length;
+  document.getElementById('statRow').style.display='flex';
+  document.getElementById('btnExport').disabled=!matchedRows.length;
+  document.getElementById('outcSection').style.display=gtRows.length?'block':'none';
+  document.getElementById('waSection').style.display=gtRows.length?'block':'none';
+  document.getElementById('resultsSection').style.display='block';
+  document.getElementById('gtSection').style.display=gtRows.length?'block':'none';
+  document.getElementById('imgPreview').style.display='none';
+  showToast(`匹配 ${matchedRows.length} 条，GT ${gtRows.length} 张`);
 }
 
 // ════════════════════════════════════════════════════════
-// PARSE A FOR GT
+// RENDER
 // ════════════════════════════════════════════════════════
-function parseAforGT(text) {
-  const blocks = splitAintoBlocks(text);
-  const rows = [];
-
-  for (const block of blocks) {
-    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
-
-    // ── Date: first occurrence only ──
-    let dateStr = '';
-    for (const line of lines) {
-      // TT Format: "26.03.02 1659" → DD/MM/YY = 02/03/26
-      let m = line.match(/(\d{2})\.(\d{2})\.(\d{2})\s+\d{3,4}/);
-      if (m) { dateStr = `${m[3]}/${m[2]}/${m[1]}`; break; }
-      // S88 Format: {0222} → 22/02/26
-      m = line.match(/\{(\d{2})(\d{2})\}/);
-      if (m) {
-        const yr = new Date().getFullYear().toString().slice(2);
-        dateStr = `${m[2]}/${m[1]}/${yr}`; break;
-      }
-      // Format: "26/03" or "02/03" → DD/MM, year from context
-      m = line.match(/\b(\d{2})\/(\d{2})\b/);
-      if (m && !dateStr) {
-        const yr = new Date().getFullYear().toString().slice(2);
-        dateStr = `${m[1]}/${m[2]}/${yr}`; break;
-      }
-      // Format: "02Mar" → DD/MM/YY
-      m = line.match(/\b(\d{1,2})(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/i);
-      if (m) {
-        const months = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',
-                        jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
-        const mo = months[m[2].toLowerCase().slice(0,3)];
-        const yr = new Date().getFullYear().toString().slice(2);
-        dateStr = `${String(m[1]).padStart(2,'0')}/${mo}/${yr}`; break;
-      }
-    }
-
-    // ── Doc number ──
-    let docNo = '';
-    for (const line of lines) {
-      const m = line.match(/\((\d{5})\)/);
-      if (m) { docNo = m[1]; break; }
-    }
-
-    // ── GT amount & currency ──
-    let gtAmt = null;
-    let currency = 'RM';
-    for (const line of lines) {
-      // GT=xx (SGD) or GT=xx
-      let m = line.match(/GT[=:](\d+(?:\.\d+)?)\s*(?:\(SGD\))?/i);
-      if (!m) m = line.match(/T\((\d+(?:\.\d+)?)\)/i);
-      if (m) {
-        gtAmt = parseFloat(m[1]);
-        if (/SGD/i.test(line)) currency = 'SGD';
-        break;
-      }
-    }
-
-    if (dateStr && gtAmt !== null) {
-      rows.push({
-        date: dateStr,
-        docNo,
-        rm: currency === 'RM' ? gtAmt : 0,
-        sgd: currency === 'SGD' ? gtAmt : 0,
-        currency,
-        kouAmt: 0,
-        kouZhongZi: 0,
-        owe: 0,
-      });
-    }
-  }
-
-  return rows;
-}
-
-// Split A text into individual receipt blocks
-// Handles both TT format (YY.MM.DD HHMM) and S88 format ([S88] header)
-function splitAintoBlocks(text) {
-  const lines = text.split('\n');
-  const blocks = [];
-  let current = [];
-
-  for (const line of lines) {
-    const t = line.trim();
-    const isTTStart  = /\d{2}\.\d{2}\.\d{2}\s+\d{3,4}/.test(t);
-    const isS88Start = /^\[S88\]/.test(t);
-    if ((isTTStart || isS88Start) && current.length) {
-      blocks.push(current.join('\n'));
-      current = [];
-    }
-    current.push(line);
-  }
-  if (current.length) blocks.push(current.join('\n'));
-  return blocks.filter(b => b.trim());
-}
-
-// ════════════════════════════════════════════════════════
-// RENDER GT
-// ════════════════════════════════════════════════════════
-function renderGT(rows) {
-  const tbody = document.getElementById('gtBody');
-  tbody.innerHTML = '';
-
-  if (!rows.length) return;
-
-  let totalRM = 0, totalSGD = 0, totalKou = 0, totalKZ = 0, totalOwe = 0;
-
-  for (const r of rows) {
-    totalRM += r.rm;
-    totalSGD += r.sgd;
-    totalKou += r.kouAmt;
-    totalKZ += r.kouZhongZi;
-    totalOwe += r.owe;
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td style="color:var(--muted)">${r.date}</td>
-      <td style="color:var(--accent)">${r.docNo || '—'}</td>
-      <td class="num">${r.rm ? r.rm : '—'}</td>
-      <td class="num">${r.sgd ? r.sgd : '—'}</td>
-      <td class="num" style="color:var(--warn)">${r.kouAmt ? r.kouAmt : '—'}</td>
-      <td class="num" style="color:var(--warn)">${r.kouZhongZi ? r.kouZhongZi.toFixed(2) : '—'}</td>
-      <td class="num" style="color:var(--accent)">${r.rm ? r.owe.toFixed(2) : '—'}</td>
-    `;
-    tbody.appendChild(tr);
-  }
-
-  // Total row
-  const trTotal = document.createElement('tr');
-  trTotal.className = 'total-row';
-  trTotal.innerHTML = `
-    <td colspan="2">Total</td>
-    <td class="num">${totalRM || '—'}</td>
-    <td class="num">${totalSGD || '—'}</td>
-    <td class="num">${totalKou || '—'}</td>
-    <td class="num">${totalKZ ? totalKZ.toFixed(2) : '—'}</td>
-    <td class="num">${totalOwe ? totalOwe.toFixed(2) : '—'}</td>
-  `;
-  tbody.appendChild(trTotal);
-
-  document.getElementById('gtCount').textContent = rows.length;
-
-  // WhatsApp text
-  renderWA(rows, totalRM, totalSGD);
-}
-
-function renderWA(rows, totalRM, totalSGD) {
-  const pad = (s, n) => String(s).padEnd(n);
-  const padL = (s, n) => String(s).padStart(n);
-
-  let lines = [];
-  lines.push(`Date        RM${totalSGD ? '      SGD' : ''}`);
-  lines.push('─'.repeat(totalSGD ? 26 : 18));
-
-  for (const r of rows) {
-    let line = `${pad(r.date, 12)}`;
-    if (r.rm) line += padL(r.rm, 6);
-    else line += padL('', 6);
-    if (totalSGD) line += r.sgd ? padL(r.sgd, 9) : '';
-    lines.push(line);
-  }
-
-  lines.push('─'.repeat(totalSGD ? 26 : 18));
-  let totalLine = `${pad('Total', 12)}${padL(totalRM || '', 6)}`;
-  if (totalSGD) totalLine += padL(totalSGD, 9);
-  lines.push(totalLine);
-
-  document.getElementById('waText').textContent = lines.join('\n');
-}
-
-function copyWA() {
-  const text = document.getElementById('waText').textContent;
-  navigator.clipboard.writeText(text).then(() => showToast('已复制到剪贴板'));
-}
-
-// ════════════════════════════════════════════════════════
-// RENDER TABLE (匹配结果)
-// ════════════════════════════════════════════════════════
-function renderTable(rows) {
-  const tbody = document.getElementById('resultBody');
-  tbody.innerHTML = '';
+function renderMatchTable(rows) {
+  const tbody=document.getElementById('resultBody');
+  tbody.innerHTML='';
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--muted);font-family:var(--mono)">无匹配结果</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">无匹配结果</td></tr>`;
     return;
   }
   for (const r of rows) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td class="td-date">${r.dateA}</td>
-      <td class="td-docno">${r.docNo}</td>
-      <td>${esc(r.line)}</td>
-      <td style="color:var(--muted)">${esc(r.betType)}</td>
-      <td class="td-amt">${r.amount || '—'}</td>
-    `;
+    const src=r._grp==='A'?`<span style="color:var(--ali-a);font-size:10px">Aliapos</span>`:`<span style="color:var(--ali-b);font-size:10px">Alibaba</span>`;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="date">${r.dateA}</td><td class="docno">${r.docNo}</td><td>${esc(r.line)}</td><td style="color:var(--muted)">${esc(r.betType)}</td><td class="amt">${r.amount||'—'}</td><td>${src}</td>`;
     tbody.appendChild(tr);
   }
+}
+
+function renderGT(rows) {
+  const tbody=document.getElementById('gtBody'); tbody.innerHTML='';
+  if (!rows.length) return;
+  let tRM=0,tSGD=0,tKou=0,tKZ=0,tOwe=0;
+  for (const r of rows) {
+    tRM+=r.rm; tSGD+=r.sgd; tKou+=r.kouAmt; tKZ+=r.kouZhongZi; tOwe+=r.owe;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="date">${r.date}</td><td class="docno">${r.docNo||'—'}</td><td class="num">${r.rm||'—'}</td><td class="num">${r.sgd||'—'}</td><td class="num" style="color:var(--warn)">${r.kouAmt||'—'}</td><td class="num" style="color:var(--warn)">${r.kouZhongZi?r.kouZhongZi.toFixed(2):'—'}</td><td class="num" style="color:var(--accent)">${r.rm?r.owe.toFixed(2):'—'}</td>`;
+    tbody.appendChild(tr);
+  }
+  const tr=document.createElement('tr'); tr.className='gt-total-row';
+  tr.innerHTML=`<td colspan="2">Total</td><td class="num">${tRM||'—'}</td><td class="num">${tSGD||'—'}</td><td class="num">${tKou||'—'}</td><td class="num">${tKZ?tKZ.toFixed(2):'—'}</td><td class="num">${tOwe?tOwe.toFixed(2):'—'}</td>`;
+  tbody.appendChild(tr);
+  document.getElementById('gtCount').textContent=`${rows.length} 张`;
+}
+
+// ════════════════════════════════════════════════════════
+// STRIKE MAP
+// ════════════════════════════════════════════════════════
+function extractCode(line) {
+  const m=line.match(/^([A-Za-z]+)-\d+-(\d{4})\s/);
+  if (m) return m[1].toUpperCase()+m[2];
+  const m2=line.match(/([A-Za-z])[-–]?\d+[-–](\d{4})/);
+  if (m2) return m2[1].toUpperCase()+m2[2];
+  return '';
+}
+
+function buildStrikeMap(matched) {
+  const rmMap={}, sgdMap={};
+  for (const r of matched) {
+    const code=extractCode(r.line);
+    const amt=parseFloat(r.amount)||0;
+    if (!amt) continue;
+    const entry=`${amt%1===0?amt:amt.toFixed(2)}(${code||r.docNo})`;
+    if (/SGD/i.test(r.betType)||/SGD/i.test(r.line)) {
+      if (!sgdMap[r.docNo]) sgdMap[r.docNo]=[];
+      sgdMap[r.docNo].push(entry);
+    } else {
+      if (!rmMap[r.docNo]) rmMap[r.docNo]=[];
+      rmMap[r.docNo].push(entry);
+    }
+  }
+  return {rmMap,sgdMap};
+}
+
+// ════════════════════════════════════════════════════════
+// OUTPUT C — table render
+// ════════════════════════════════════════════════════════
+function renderOutC(rows) {
+  if (!rows.length) return;
+  const {rmMap,sgdMap}=buildStrikeMap(matchedRows);
+  const tRM=rows.reduce((s,r)=>s+r.rm,0);
+  const tSGD=rows.reduce((s,r)=>s+r.sgd,0);
+  const grand=tRM+tSGD;
+  const disc=Math.floor(grand/10);
+  const tKZ=rows.reduce((s,r)=>s+r.kouZhongZi,0);
+  const bal=grand-disc-tKZ;
+
+  const table=document.getElementById('outcTable');
+  let html='<thead><tr><th style="width:68px">Date</th><th style="width:44px">RM</th><th style="width:44px">SGD</th><th style="min-width:80px">RM Strike 中字</th><th style="min-width:80px">SGD Strike 中字</th></tr></thead><tbody>';
+
+  // Sort rows by date
+  const sorted=[...rows].sort((a,b)=>a.date.localeCompare(b.date));
+  for (const r of sorted) {
+    const rmS=(rmMap[r.docNo]||[]).join('\n');
+    const sgdS=(sgdMap[r.docNo]||[]).join('\n');
+    html+=`<tr><td class="left">${r.date}</td><td>${r.rm||''}</td><td>${r.sgd||''}</td><td style="white-space:pre-line;text-align:left;color:var(--blue)">${esc(rmS)}</td><td style="white-space:pre-line;text-align:left;color:var(--blue)">${esc(sgdS)}</td></tr>`;
+  }
+
+  html+=`<tr class="sep-row"><td class="left">Total 总数</td><td>${tRM||''}</td><td>${tSGD||''}</td><td></td><td></td></tr>`;
+  html+=`<tr class="discount-row"><td class="left">Discount 扣</td><td>-${disc}</td><td></td><td></td><td></td></tr>`;
+  html+=`<tr class="strike-row"><td class="left">Strike 扣中字</td><td>-${tKZ?tKZ.toFixed(2):0}</td><td></td><td></td><td></td></tr>`;
+  html+=`<tr class="balance-row"><td class="left">Balance 尚欠</td><td>${bal.toFixed(2)}</td><td></td><td></td><td></td></tr>`;
+  html+='</tbody>';
+  table.innerHTML=html;
+}
+
+// ════════════════════════════════════════════════════════
+// IMAGE EXPORT — render Output C to canvas
+// ════════════════════════════════════════════════════════
+function generateImage() {
+  const rows=gtRows;
+  if (!rows.length) { showToast('没有数据'); return; }
+  const {rmMap,sgdMap}=buildStrikeMap(matchedRows);
+  const sorted=[...rows].sort((a,b)=>a.date.localeCompare(b.date));
+  const tRM=rows.reduce((s,r)=>s+r.rm,0);
+  const tSGD=rows.reduce((s,r)=>s+r.sgd,0);
+  const grand=tRM+tSGD;
+  const disc=Math.floor(grand/10);
+  const tKZ=rows.reduce((s,r)=>s+r.kouZhongZi,0);
+  const bal=grand-disc-tKZ;
+
+  // Build text lines
+  const lines=[];
+  lines.push(['Date','RM','SGD','Strike 中字']);
+  lines.push('sep');
+  for (const r of sorted) {
+    const rmS=(rmMap[r.docNo]||[]).join(' / ');
+    const sgdS=(sgdMap[r.docNo]||[]).join(' / ');
+    const strike=[rmS,sgdS].filter(Boolean).join(' | ');
+    lines.push([r.date, r.rm||'', r.sgd||'', strike]);
+  }
+  lines.push('sep');
+  lines.push(['Total 总数', tRM||'','','']);
+  lines.push(['Discount 扣', `-${disc}`,'','']);
+  lines.push(['Strike 扣中字', `-${tKZ?tKZ.toFixed(2):0}`,'','']);
+  lines.push(['Balance 尚欠', bal.toFixed(2),'','']);
+
+  // Canvas settings
+  const fs=15, pad=14, lh=24, colW=[90,50,50,0];
+  const canvas=document.getElementById('outcCanvas');
+  const ctx=canvas.getContext('2d');
+  ctx.font=`${fs}px monospace`;
+
+  // Measure strike col width
+  let maxStrike=0;
+  for (const l of lines) {
+    if (l==='sep') continue;
+    const s=String(l[3]);
+    const w=ctx.measureText(s).width;
+    if (w>maxStrike) maxStrike=w;
+  }
+  colW[3]=Math.max(120,maxStrike+10);
+
+  const totalW=colW.reduce((a,b)=>a+b,0)+pad*2;
+  const totalH=(lines.length+1)*lh+pad*2;
+  canvas.width=totalW; canvas.height=totalH;
+
+  // Background
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,totalW,totalH);
+
+  // Draw
+  let y=pad+lh;
+  const x0=pad;
+  const xs=[x0, x0+colW[0], x0+colW[0]+colW[1], x0+colW[0]+colW[1]+colW[2]];
+
+  for (const line of lines) {
+    if (line==='sep') {
+      ctx.strokeStyle='#aaa'; ctx.beginPath(); ctx.moveTo(pad,y-lh/2); ctx.lineTo(totalW-pad,y-lh/2); ctx.stroke();
+      continue;
+    }
+    const [a,b,c,d]=line.map(String);
+    // Highlight balance row
+    if (a.startsWith('Balance')) {
+      ctx.fillStyle='#fef08a'; ctx.fillRect(0,y-lh+4,totalW,lh);
+      ctx.fillStyle='#854d0e'; ctx.font=`bold ${fs}px monospace`;
+    } else if (a.startsWith('Total')||a.startsWith('Discount')||a.startsWith('Strike')) {
+      ctx.fillStyle='#f3f4f6'; ctx.fillRect(0,y-lh+4,totalW,lh);
+      ctx.fillStyle='#374151'; ctx.font=`bold ${fs}px monospace`;
+    } else if (line===lines[0]) {
+      ctx.fillStyle='#e5e7eb'; ctx.fillRect(0,y-lh+4,totalW,lh);
+      ctx.fillStyle='#6b7280'; ctx.font=`bold ${fs}px monospace`;
+    } else {
+      ctx.fillStyle='#1a1d23'; ctx.font=`${fs}px monospace`;
+    }
+    ctx.fillText(a, xs[0], y);
+    ctx.fillText(b, xs[1], y);
+    ctx.fillText(c, xs[2], y);
+    ctx.fillText(d, xs[3], y);
+    y+=lh;
+  }
+
+  document.getElementById('imgPreview').style.display='block';
+  showToast('图片已生成，长按保存 → 发送到 WhatsApp');
+}
+
+function downloadImage() {
+  const canvas=document.getElementById('outcCanvas');
+  if (!canvas.width) { generateImage(); return; }
+  const a=document.createElement('a');
+  a.download=`输出C_${new Date().toISOString().slice(0,10)}.png`;
+  a.href=canvas.toDataURL('image/png');
+  a.click();
+  showToast('图片已下载');
+}
+
+// ════════════════════════════════════════════════════════
+// WA preview
+// ════════════════════════════════════════════════════════
+function renderWA(rows) {
+  const sorted=[...rows].sort((a,b)=>a.date.localeCompare(b.date));
+  const tRM=rows.reduce((s,r)=>s+r.rm,0);
+  const tSGD=rows.reduce((s,r)=>s+r.sgd,0);
+  const pad=(s,n)=>String(s).padEnd(n);
+  const padL=(s,n)=>String(s).padStart(n);
+  const C1=10,C2=8;
+  const lines=[];
+  lines.push(pad('Date',C1)+pad('RM',C2)+(tSGD?'SGD':''));
+  lines.push('─'.repeat(C1+C2+(tSGD?6:0)));
+  for (const r of sorted) {
+    lines.push(pad(r.date,C1)+padL(r.rm||'',C2-2).padEnd(C2)+(tSGD?padL(r.sgd||'',6):''));
+  }
+  lines.push('─'.repeat(C1+C2+(tSGD?6:0)));
+  lines.push(pad('Total',C1)+padL(tRM,C2)+(tSGD?padL(tSGD,6):''));
+  document.getElementById('waText').textContent=lines.join('\n');
+}
+
+function copyWA() {
+  const t=document.getElementById('waText').textContent;
+  doClip(t, '已复制 WhatsApp 格式');
 }
 
 // ════════════════════════════════════════════════════════
@@ -1288,417 +919,133 @@ function renderTable(rows) {
 // ════════════════════════════════════════════════════════
 function exportMatchExcel() {
   if (!matchedRows.length) return;
-  const wb = XLSX.utils.book_new();
-  const data = [['日期', '单据号码', 'B组单据行', '投注类型', '金额 (MYR)']];
-  for (const r of matchedRows) {
-    data.push([r.dateA, r.docNo, r.line, r.betType, r.amount ? parseFloat(r.amount) : '']);
-  }
-  const ws = XLSX.utils.aoa_to_sheet(data);
-  ws['!cols'] = [{ wch: 14 }, { wch: 10 }, { wch: 28 }, { wch: 18 }, { wch: 12 }];
-  XLSX.utils.book_append_sheet(wb, ws, '匹配结果');
-  XLSX.writeFile(wb, `匹配结果_${new Date().toISOString().slice(0,10)}.xlsx`);
+  const wb=XLSX.utils.book_new();
+  const data=[['日期','单据号码','中奖资料行','投注类型','金额','来源']];
+  for (const r of matchedRows)
+    data.push([r.dateA,r.docNo,r.line,r.betType,r.amount?parseFloat(r.amount):'',r._grp==='A'?'Aliapos':'Alibaba']);
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  ws['!cols']=[{wch:14},{wch:10},{wch:28},{wch:18},{wch:10},{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws,'匹配结果');
+  XLSX.writeFile(wb,`匹配结果_${new Date().toISOString().slice(0,10)}.xlsx`);
   showToast('匹配结果已导出');
 }
 
 function exportGT() {
   if (!gtRows.length) return;
-  const wb = XLSX.utils.book_new();
-  const data = [['Date', '单据号', 'RM', 'SGD', '扣', '扣中字', '尚欠']];
-  for (const r of gtRows) {
-    data.push([
-      r.date,
-      r.docNo,
-      r.rm || '',
-      r.sgd || '',
-      r.kouAmt || '',
-      r.kouZhongZi ? parseFloat(r.kouZhongZi.toFixed(2)) : '',
-      r.rm ? parseFloat(r.owe.toFixed(2)) : '',
-    ]);
-  }
-  // Total row
-  const tRM = gtRows.reduce((s,r) => s + r.rm, 0);
-  const tSGD = gtRows.reduce((s,r) => s + r.sgd, 0);
-  const tKou = gtRows.reduce((s,r) => s + r.kouAmt, 0);
-  const tKZ = gtRows.reduce((s,r) => s + r.kouZhongZi, 0);
-  const tOwe = gtRows.reduce((s,r) => s + r.owe, 0);
-  data.push(['Total', '', tRM || '', tSGD || '', tKou || '', parseFloat(tKZ.toFixed(2)) || '', parseFloat(tOwe.toFixed(2)) || '']);
-
-  const ws = XLSX.utils.aoa_to_sheet(data);
-  ws['!cols'] = [{ wch: 12 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 6 }, { wch: 10 }, { wch: 10 }];
-  XLSX.utils.book_append_sheet(wb, ws, 'GT汇总');
-  XLSX.writeFile(wb, `GT汇总_${new Date().toISOString().slice(0,10)}.xlsx`);
+  const wb=XLSX.utils.book_new();
+  const data=[['Date','单据号','RM','SGD','扣','扣中字','尚欠']];
+  for (const r of gtRows)
+    data.push([r.date,r.docNo,r.rm||'',r.sgd||'',r.kouAmt||'',r.kouZhongZi?+r.kouZhongZi.toFixed(2):'',r.rm?+r.owe.toFixed(2):'']);
+  const tRM=gtRows.reduce((s,r)=>s+r.rm,0),tSGD=gtRows.reduce((s,r)=>s+r.sgd,0);
+  const tKou=gtRows.reduce((s,r)=>s+r.kouAmt,0),tKZ=gtRows.reduce((s,r)=>s+r.kouZhongZi,0);
+  const tOwe=gtRows.reduce((s,r)=>s+r.owe,0);
+  data.push(['Total','',tRM||'',tSGD||'',tKou||'',+tKZ.toFixed(2)||'',+tOwe.toFixed(2)||'']);
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  ws['!cols']=[{wch:10},{wch:8},{wch:8},{wch:8},{wch:6},{wch:10},{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws,'GT汇总');
+  XLSX.writeFile(wb,`GT汇总_${new Date().toISOString().slice(0,10)}.xlsx`);
   showToast('GT汇总已导出');
+}
+
+function exportOutC() {
+  if (!gtRows.length) return;
+  const {rmMap,sgdMap}=buildStrikeMap(matchedRows);
+  const sorted=[...gtRows].sort((a,b)=>a.date.localeCompare(b.date));
+  const tRM=gtRows.reduce((s,r)=>s+r.rm,0),tSGD=gtRows.reduce((s,r)=>s+r.sgd,0);
+  const grand=tRM+tSGD, disc=Math.floor(grand/10);
+  const tKZ=gtRows.reduce((s,r)=>s+r.kouZhongZi,0), bal=grand-disc-tKZ;
+  const wb=XLSX.utils.book_new();
+  const data=[['Date','RM','SGD','RM Strike 中字','SGD Strike 中字']];
+  for (const r of sorted) {
+    const rmS=(rmMap[r.docNo]||[]).join('\n');
+    const sgdS=(sgdMap[r.docNo]||[]).join('\n');
+    data.push([r.date,r.rm||'',r.sgd||'',rmS,sgdS]);
+  }
+  data.push(['Total 总数',tRM,tSGD,'','']);
+  data.push(['Discount 扣',-disc,'','','']);
+  data.push(['Strike 扣中字',-(tKZ||0),'','','']);
+  data.push(['Balance 尚欠',+bal.toFixed(2),'','','']);
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  ws['!cols']=[{wch:10},{wch:7},{wch:7},{wch:18},{wch:18}];
+  // Yellow balance row
+  const br=data.length-1;
+  for (let c=0;c<5;c++) {
+    const ref=XLSX.utils.encode_cell({r:br,c});
+    if (!ws[ref]) ws[ref]={v:''};
+    ws[ref].s={fill:{fgColor:{rgb:'FEF08A'}},font:{bold:true}};
+  }
+  XLSX.utils.book_append_sheet(wb,ws,'输出C');
+  XLSX.writeFile(wb,`输出C_${new Date().toISOString().slice(0,10)}.xlsx`);
+  showToast('输出C已导出');
 }
 
 // ════════════════════════════════════════════════════════
 // FILE LOADERS
 // ════════════════════════════════════════════════════════
 function loadFile(side) {
-  const input = document.getElementById('file' + side);
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    document.getElementById('input' + side).value = e.target.result;
-    updateCounterA();
-    showToast(`已载入：${file.name}`);
-    input.value = '';
+  const input=document.getElementById('file'+side);
+  const file=input.files[0]; if (!file) return;
+  const reader=new FileReader();
+  reader.onload=e => {
+    document.getElementById('inputA').value=e.target.result;
+    updateCounterA(); showToast(`已载入：${file.name}`); input.value='';
   };
-  reader.readAsText(file, 'UTF-8');
+  reader.readAsText(file,'UTF-8');
 }
 
 function loadFileToAdd() {
-  const input = document.getElementById('fileBAdd');
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    document.getElementById('inputBAdd').value = e.target.result;
-    showToast(`已载入：${file.name}，请按「添加到资料库」`);
-    input.value = '';
+  const input=document.getElementById('fileBAdd');
+  const file=input.files[0]; if (!file) return;
+  const reader=new FileReader();
+  reader.onload=e => {
+    document.getElementById('inputBAdd').value=e.target.result;
+    showToast(`已载入：${file.name}，请按「添加」`); input.value='';
   };
-  reader.readAsText(file, 'UTF-8');
+  reader.readAsText(file,'UTF-8');
 }
 
 // ════════════════════════════════════════════════════════
-// MISC HELPERS
+// MISC
 // ════════════════════════════════════════════════════════
 document.getElementById('inputA').addEventListener('input', updateCounterA);
 
 function updateCounterA() {
-  const txt = document.getElementById('inputA').value.trim();
-  const el = document.getElementById('counterA');
-  if (!txt) { el.innerHTML = '—'; return; }
-  const { mode, map } = parseA(txt);
-  el.innerHTML = `识别到 <em>${map.size}</em> 个号码（${mode === 'manual' ? '手动号码模式' : '单据模式'}）`;
+  const txt=document.getElementById('inputA').value.trim();
+  const el=document.getElementById('counterA');
+  if (!txt) { el.innerHTML='—'; return; }
+  const {mode,map}=parseA(txt);
+  el.innerHTML=`识别到 <em>${map.size}</em> 个号码（${mode==='manual'?'手动模式':'单据模式'}）`;
 }
 
-function clearPanel(side) {
-  document.getElementById('input' + side).value = '';
-  if (side === 'A') document.getElementById('counterA').innerHTML = '—';
+function clearA() {
+  document.getElementById('inputA').value='';
+  document.getElementById('counterA').innerHTML='—';
 }
 
-function esc(str) {
-  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function esc(str) { return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function doClip(text, msg) {
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text).then(()=>showToast(msg)).catch(()=>fallbackCopy(text,msg));
+  } else fallbackCopy(text,msg);
 }
 
-function showToast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 3000);
-}
-
-// ════════════════════════════════════════════════════════
-// OUTPUT C
-// ════════════════════════════════════════════════════════
-
-// Extract winner code from B line: "T-1-2956 (47108)" → "T2956"
-function extractWinnerCode(line) {
-  // Match letter(s) + dash + digit(s) + dash + 4digits
-  const m = line.match(/^([A-Za-z]+)-\d+-(\d{4})\s/);
-  if (m) return m[1].toUpperCase() + m[2];
-  // Fallback: letter + 4 digits anywhere
-  const m2 = line.match(/([A-Za-z])[-–]?\d+[-–](\d{4})/);
-  if (m2) return m2[1].toUpperCase() + m2[2];
-  return '';
-}
-
-// Build strike map: docNo → [ "amount (WinnerCode)", ... ]
-function buildStrikeMap(matchedRows) {
-  const rmMap  = {}; // docNo → [lines]
-  const sgdMap = {}; // docNo → [lines]
-
-  for (const r of matchedRows) {
-    const code = extractWinnerCode(r.line);
-    const amt  = r.amount ? parseFloat(r.amount) : 0;
-    if (!amt) continue;
-    const entry = `${amt % 1 === 0 ? amt : amt.toFixed(2)} (${code || r.docNo})`;
-    // Determine currency from betType or line
-    if (/SGD/i.test(r.betType) || /SGD/i.test(r.line)) {
-      if (!sgdMap[r.docNo]) sgdMap[r.docNo] = [];
-      sgdMap[r.docNo].push(entry);
-    } else {
-      if (!rmMap[r.docNo]) rmMap[r.docNo] = [];
-      rmMap[r.docNo].push(entry);
-    }
-  }
-  return { rmMap, sgdMap };
-}
-
-function renderOutC(rows) {
-  if (!rows.length) return;
-
-  const { rmMap, sgdMap } = buildStrikeMap(matchedRows);
-
-  const totalRM    = rows.reduce((s,r) => s + r.rm, 0);
-  const totalSGD   = rows.reduce((s,r) => s + r.sgd, 0);
-  const grandTotal = totalRM + totalSGD;
-  const discount   = Math.floor(grandTotal / 10);
-  const totalKZ    = rows.reduce((s,r) => s + r.kouZhongZi, 0);
-  const balance    = grandTotal - discount - totalKZ;
-  const hasSGD     = rows.some(r => r.sgd > 0);
-
-  const table = document.getElementById('outcTable');
-  let html = '<thead><tr>';
-  html += '<th style="width:68px">Date</th>';
-  html += '<th style="width:46px">RM</th>';
-  html += '<th style="width:46px">SGD</th>';
-  html += '<th style="width:90px">RM Strike<br>中字</th>';
-  html += '<th style="width:90px">SGD Strike<br>中字</th>';
-  html += '</tr></thead><tbody>';
-
-  for (const r of rows) {
-    const rmStrike  = (rmMap[r.docNo]  || []).join('\n');
-    const sgdStrike = (sgdMap[r.docNo] || []).join('\n');
-    html += `<tr>
-      <td class="left">${r.date}</td>
-      <td>${r.rm || ''}</td>
-      <td>${r.sgd || ''}</td>
-      <td style="white-space:pre-line;text-align:left;color:var(--blue)">${esc(rmStrike)}</td>
-      <td style="white-space:pre-line;text-align:left;color:var(--blue)">${esc(sgdStrike)}</td>
-    </tr>`;
-  }
-
-  // Total row
-  html += `<tr class="sep-row label-row">
-    <td class="left">Total 总数</td>
-    <td>${totalRM || ''}</td>
-    <td>${totalSGD || ''}</td>
-    <td></td><td></td>
-  </tr>`;
-
-  // Discount row
-  html += `<tr class="discount-row label-row">
-    <td class="left">Discount 扣</td>
-    <td>-${discount}</td>
-    <td></td><td></td><td></td>
-  </tr>`;
-
-  // Strike row
-  html += `<tr class="strike-row label-row">
-    <td class="left">Strike 扣中字</td>
-    <td>-${totalKZ ? totalKZ.toFixed(2) : 0}</td>
-    <td></td><td></td><td></td>
-  </tr>`;
-
-  // Balance row — yellow highlight
-  html += `<tr class="balance-row" style="background:#fef08a">
-    <td class="left" style="color:#854d0e;font-weight:700">Balance 尚欠</td>
-    <td style="color:#854d0e;font-weight:700">${balance.toFixed(2)}</td>
-    <td></td><td></td><td></td>
-  </tr>`;
-
-  html += '</tbody>';
-  table.innerHTML = html;
-  document.getElementById('outcSection').style.display = 'block';
-}
-
-function getOutCText() {
-  const rows = gtRows;
-  const { rmMap, sgdMap } = buildStrikeMap(matchedRows);
-  const totalRM    = rows.reduce((s,r) => s + r.rm, 0);
-  const totalSGD   = rows.reduce((s,r) => s + r.sgd, 0);
-  const grandTotal = totalRM + totalSGD;
-  const discount   = Math.floor(grandTotal / 10);
-  const totalKZ    = rows.reduce((s,r) => s + r.kouZhongZi, 0);
-  const balance    = grandTotal - discount - totalKZ;
-
-  const sep = '\t';
-  const nl  = '\n';
-  let out   = '';
-
-  out += ['Date','RM','SGD','RM Strike 中字','SGD Strike 中字'].join(sep) + nl;
-
-  for (const r of rows) {
-    const rmS  = (rmMap[r.docNo]  || []).join(' / ');
-    const sgdS = (sgdMap[r.docNo] || []).join(' / ');
-    out += [r.date, r.rm||'', r.sgd||'', rmS, sgdS].join(sep) + nl;
-  }
-
-  out += ['Total 总数', totalRM, totalSGD,'',''].join(sep) + nl;
-  out += ['Discount 扣', `-${discount}`,'','',''].join(sep) + nl;
-  out += ['Strike 扣中字', `-${totalKZ ? totalKZ.toFixed(2) : 0}`,'','',''].join(sep) + nl;
-  out += ['Balance 尚欠', balance.toFixed(2),'','',''].join(sep) + nl;
-
-  return out;
-}
-
-function copyOutC(mode) {
-  const rows = gtRows;
-  const { rmMap, sgdMap } = buildStrikeMap(matchedRows);
-  const totalRM    = rows.reduce((s,r) => s + r.rm, 0);
-  const totalSGD   = rows.reduce((s,r) => s + r.sgd, 0);
-  const grandTotal = totalRM + totalSGD;
-  const discount   = Math.floor(grandTotal / 10);
-  const totalKZ    = rows.reduce((s,r) => s + r.kouZhongZi, 0);
-  const balance    = grandTotal - discount - totalKZ;
-
-  // Build lines
-  const dataLines = [];
-  for (const r of rows) {
-    const rmS  = (rmMap[r.docNo]  || []).join(' / ');
-    const sgdS = (sgdMap[r.docNo] || []).join(' / ');
-    const strike = [rmS, sgdS].filter(Boolean).join(' | ');
-    dataLines.push({ date: r.date, rm: r.rm||'', sgd: r.sgd||'', strike });
-  }
-
-  // Column widths for alignment
-  const col1 = 10; // date
-  const col2 = 6;  // RM
-  const col3 = 6;  // SGD
-
-  const pad = (s, n) => String(s).padEnd(n);
-  const padL = (s, n) => String(s).padStart(n);
-
-  const header = pad('Date', col1) + pad('RM', col2) + pad('SGD', col3) + 'Strike 中字';
-  const sep    = '─'.repeat(header.length > 30 ? header.length : 30);
-
-  const bodyLines = dataLines.map(r =>
-    pad(r.date, col1) + pad(r.rm, col2) + pad(r.sgd, col3) + (r.strike || '')
-  );
-
-  const summaryLines = [
-    pad('Total 总数', col1 + col2 - 2) + padL(totalRM, col2),
-    pad('Discount 扣', col1 + col2 - 2) + padL(`-${discount}`, col2),
-    pad('Strike 扣中字', col1 + col2 - 2) + padL(`-${totalKZ ? totalKZ.toFixed(2) : 0}`, col2),
-    pad('Balance 尚欠', col1 + col2 - 2) + padL(balance.toFixed(2), col2),
-  ];
-
-  let text;
-  if (mode === 'backtick') {
-    // Wrap each line in backticks for WhatsApp monospace
-    const allLines = [header, sep, ...bodyLines, sep, ...summaryLines];
-    text = allLines.map(l => '`' + l + '`').join('\n');
-  } else {
-    // Plain space-aligned, no backticks
-    text = [header, sep, ...bodyLines, sep, ...summaryLines].join('\n');
-  }
-
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text)
-      .then(() => showToast(mode === 'backtick' ? '已复制 格式A（等宽）' : '已复制 格式B（空格）'))
-      .catch(() => fallbackCopy(text));
-  } else {
-    fallbackCopy(text);
-  }
-}
-
-function fallbackCopy(text) {
-  const ta = document.createElement('textarea');
-  ta.value = text;
-  ta.style.position = 'fixed';
-  ta.style.opacity = '0';
-  document.body.appendChild(ta);
-  ta.focus();
-  ta.select();
-  try {
-    document.execCommand('copy');
-    showToast('输出C已复制');
-  } catch(e) {
-    showToast('复制失败，请手动复制');
-  }
+function fallbackCopy(text, msg) {
+  const ta=document.createElement('textarea');
+  ta.value=text; ta.style.cssText='position:fixed;opacity:0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try { document.execCommand('copy'); showToast(msg||'已复制'); } catch { showToast('复制失败'); }
   document.body.removeChild(ta);
 }
 
-function exportOutC() {
-  if (!gtRows.length) return;
-  const rows = gtRows;
-  const { rmMap, sgdMap } = buildStrikeMap(matchedRows);
-  const totalRM    = rows.reduce((s,r) => s + r.rm, 0);
-  const totalSGD   = rows.reduce((s,r) => s + r.sgd, 0);
-  const grandTotal = totalRM + totalSGD;
-  const discount   = Math.floor(grandTotal / 10);
-  const totalKZ    = rows.reduce((s,r) => s + r.kouZhongZi, 0);
-  const balance    = grandTotal - discount - totalKZ;
-
-  const wb   = XLSX.utils.book_new();
-  const data = [['Date','RM','SGD','RM Strike 中字','SGD Strike 中字']];
-
-  for (const r of rows) {
-    const rmS  = (rmMap[r.docNo]  || []).join('\n');
-    const sgdS = (sgdMap[r.docNo] || []).join('\n');
-    data.push([r.date, r.rm||'', r.sgd||'', rmS, sgdS]);
-  }
-  data.push(['Total 总数', totalRM, totalSGD,'','']);
-  data.push(['Discount 扣', -discount,'','','']);
-  data.push(['Strike 扣中字', -(totalKZ||0),'','','']);
-  data.push(['Balance 尚欠', parseFloat(balance.toFixed(2)),'','','']);
-
-  const ws = XLSX.utils.aoa_to_sheet(data);
-  ws['!cols'] = [{wch:10},{wch:7},{wch:7},{wch:16},{wch:16}];
-
-  // Yellow fill for Balance row
-  const balanceRowIdx = data.length; // 1-based row index
-  const balanceCellRef = XLSX.utils.encode_cell({r: balanceRowIdx - 1, c: 0});
-  if (!ws[balanceCellRef]) ws[balanceCellRef] = {};
-
-  // Apply yellow background to balance row cells A-F
-  for (let c = 0; c < 5; c++) {
-    const cellRef = XLSX.utils.encode_cell({r: balanceRowIdx - 1, c});
-    if (!ws[cellRef]) ws[cellRef] = {v:''};
-    ws[cellRef].s = { fill: { fgColor: { rgb: 'FEF08A' } }, font: { bold: true } };
-  }
-
-  XLSX.utils.book_append_sheet(wb, ws, '输出C');
-  XLSX.writeFile(wb, `输出C_${new Date().toISOString().slice(0,10)}.xlsx`);
-  showToast('输出C已导出');
+function showToast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),3000);
 }
 
-// ── Init ──
+// Init
 refreshUI();
-
-// ════════════════════════════════════════════════════════
-// DATE CHECK
-// ════════════════════════════════════════════════════════
-function toggleDateCheck() {
-  const panel = document.getElementById('dateCheckPanel');
-  if (panel.style.display !== 'none') { panel.style.display = 'none'; return; }
-
-  const allRecs = getAllRecords();
-  if (!allRecs.length) { showToast('资料库是空的'); return; }
-
-  // Collect all unique dates
-  const dateSet = new Set();
-  for (const r of allRecs) {
-    if (r.dateB) dateSet.add(r.dateB);
-  }
-
-  // Group dates by month
-  const byMonth = {};
-  for (const d of [...dateSet].sort()) {
-    const mo = d.slice(0, 7); // "2026-03"
-    if (!byMonth[mo]) byMonth[mo] = [];
-    byMonth[mo].push(d);
-  }
-
-  let html = '';
-  for (const [mo, dates] of Object.entries(byMonth).sort()) {
-    const [yr, mn] = mo.split('-');
-    const label = `${yr}年${parseInt(mn)}月`;
-
-    // Find missing dates in this month
-    const daysInMonth = new Date(parseInt(yr), parseInt(mn), 0).getDate();
-    const missing = [];
-    for (let d = 1; d <= daysInMonth; d++) {
-      const ds = `${yr}-${mn}-${String(d).padStart(2,'0')}`;
-      if (!dateSet.has(ds)) missing.push(d);
-    }
-
-    html += `<div style="margin-bottom:12px">`;
-    html += `<div style="color:var(--blue);font-weight:600;margin-bottom:4px">${label}</div>`;
-    html += `<div style="color:var(--accent)">✓ 已有：${dates.map(d => d.slice(8).replace(/^0/,'')).join('、')} 日</div>`;
-    if (missing.length) {
-      html += `<div style="color:var(--warn);margin-top:2px">⚠ 缺少：${missing.join('、')} 日</div>`;
-    } else {
-      html += `<div style="color:var(--muted);margin-top:2px">本月日期完整</div>`;
-    }
-    html += `</div>`;
-  }
-
-  document.getElementById('dateCheckContent').innerHTML = html;
-  panel.style.display = 'block';
-}
 </script>
 </body>
 </html>

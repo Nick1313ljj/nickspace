@@ -601,7 +601,9 @@ function parseB(text) {
       let amount = '';
       if (i+1 < lines.length) {
         const next = lines[i+1];
-        if (/^\d+\.\d{2}$/.test(next.replace(/,/g,''))) { amount=next.replace(/,/g,''); i++; }
+        // Accept both "210.00" and "210" and "1,155" formats
+        const cleaned = next.replace(/,/g,'');
+        if (/^\d+(\.\d+)?$/.test(cleaned)) { amount = cleaned; i++; }
       }
       records.push({ docNo, line, betType, amount, dateB:curDate });
     }
@@ -691,7 +693,8 @@ function runMatch() {
   // Build docMatchAmt
   const docAmt = {};
   for (const r of matchedRows) {
-    const amt = parseFloat(r.amount)||0;
+    let amt = parseFloat(r.amount)||0;
+    if (r._grp === 'B') amt = Math.round((amt / 1.05) * 100) / 100;
     if (!docAmt[r.docNo]) docAmt[r.docNo]=0;
     docAmt[r.docNo]+=amt;
   }
@@ -768,8 +771,12 @@ function buildStrikeMap(matched) {
   const rmMap={}, sgdMap={};
   for (const r of matched) {
     const code=extractCode(r.line);
-    const amt=parseFloat(r.amount)||0;
+    let amt=parseFloat(r.amount)||0;
     if (!amt) continue;
+
+    // Alibaba charges 5% commission — deduct it to get actual payout
+    if (r._grp === 'B') amt = Math.round((amt / 1.05) * 100) / 100;
+
     const entry=`${amt%1===0?amt:amt.toFixed(2)}(${code||r.docNo})`;
     if (/SGD/i.test(r.betType)||/SGD/i.test(r.line)) {
       if (!sgdMap[r.docNo]) sgdMap[r.docNo]=[];

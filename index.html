@@ -227,12 +227,12 @@
 
   /* A panel light blue background */
   .panel-a {
-    background: #eef4ff;
-    border-color: #bfdbfe;
+    background: #dbeafe;
+    border-color: #93c5fd;
   }
   .panel-a textarea.main-ta {
-    background: #f5f9ff;
-    border-color: #bfdbfe;
+    background: #eff6ff;
+    border-color: #93c5fd;
   }
   .panel-a textarea.main-ta:focus { border-color: var(--blue); }
 
@@ -270,7 +270,7 @@
     padding: 14px;
     resize: vertical;
     outline: none;
-    min-height: 240px;
+    min-height: 80px;
     transition: border-color 0.2s;
   }
   textarea.main-ta::placeholder { color: var(--muted); }
@@ -495,7 +495,7 @@
     border-collapse: collapse;
     font-family: var(--mono);
     font-size: 12px;
-    min-width: 500px;
+    min-width: 420px;
   }
   .gt-table thead tr { background: var(--surface2); border-bottom: 1px solid var(--border); }
   .gt-table th {
@@ -655,7 +655,7 @@
           <button class="hbtn" onclick="addToDatabase()" style="border-color:var(--accent);color:var(--accent)">＋ 添加到资料库</button>
         </div>
         <div style="margin-top:8px">
-          <button class="hbtn" onclick="document.getElementById('inputBAdd').value='';document.getElementById('fileBAdd').value=''">✕ 清空输入框</button>
+          <button class="hbtn" onclick="document.getElementById('inputBAdd').value='';document.getElementById('fileBAdd').value=''">✕ 清空</button>
         </div>
       </div>
     </div>
@@ -678,53 +678,20 @@
   <div class="action-bar">
     <button class="btn btn-match" onclick="runMatch()">▶ 开始匹配</button>
     <button class="btn btn-export" id="btnExport" onclick="exportMatchExcel()" disabled>⬇ 导出匹配结果</button>
-    <button class="btn btn-sm" onclick="clearPanel('A')">✕ 清空 A 组</button>
     <div class="stat-row" id="statRow" style="display:none">
       <span class="s-total">B库 <em id="sTotal">0</em> 条</span>
       <span class="s-match">匹配 <em id="sMatch">0</em></span>
     </div>
   </div>
 
-  <!-- 1. WhatsApp preview -->
-  <div class="gt-section" id="gtSection" style="display:none">
-    <div class="gt-header">
-      <span class="gt-title">A 组 — GT 汇总</span>
-      <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">共 <em id="gtCount" style="color:var(--accent);font-style:normal">0</em> 张单据</span>
-      <button class="btn btn-export" style="margin-left:auto;padding:7px 16px;font-size:11px" onclick="exportGT()" id="btnExportGT">⬇ 导出GT表</button>
-    </div>
-    <div class="gt-table-wrap">
-      <table class="gt-table">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>单据号</th>
-            <th class="num">RM</th>
-            <th class="num">SGD</th>
-            <th class="num">扣</th>
-            <th class="num">扣中字</th>
-            <th class="num">尚欠</th>
-          </tr>
-        </thead>
-        <tbody id="gtBody"></tbody>
-      </table>
-    </div>
-    <!-- WhatsApp preview -->
-    <div class="wa-preview" style="background:#e0f7f7;border-color:#a7d8d8">
-      <div class="wa-preview-header">
-        <span class="wa-label" style="color:#2d7a7a">📱 WhatsApp 格式预览</span>
-        <button class="btn-copy" onclick="copyWA()">复制</button>
-      </div>
-      <div class="wa-text" id="waText"></div>
-    </div>
-  </div>
-
-  <!-- 2. Output C -->
+  <!-- 1. Output C (first) -->
   <div class="outc-section" id="outcSection" style="display:none">
     <div class="outc-header">
       <span class="outc-title">输出 C — 精装汇总表</span>
-      <div class="outc-btns" style="margin-left:auto">
-        <button class="btn btn-export" style="padding:7px 14px;font-size:11px;border-color:#7c3aed;color:#7c3aed" onclick="exportOutC()">⬇ 导出</button>
-        <button class="btn-copy" style="border-color:#7c3aed;color:#7c3aed" onclick="copyOutC()">复制</button>
+      <div class="outc-btns" style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-export" style="padding:6px 12px;font-size:10px;border-color:#7c3aed;color:#7c3aed" onclick="exportOutC()">⬇ 导出</button>
+        <button class="btn-copy" style="border-color:#7c3aed;color:#7c3aed;font-size:10px;padding:4px 8px" onclick="copyOutC('backtick')">复制A<br><span style="font-size:9px;opacity:0.7">(等宽)</span></button>
+        <button class="btn-copy" style="border-color:#2563eb;color:#2563eb;font-size:10px;padding:4px 8px" onclick="copyOutC('plain')">复制B<br><span style="font-size:9px;opacity:0.7">(空格)</span></button>
       </div>
     </div>
     <div class="outc-table-wrap">
@@ -732,22 +699,59 @@
     </div>
   </div>
 
-  <!-- 3. Match results -->
-  <div class="results-wrap" id="resultsWrap">
-    <div class="section-title">匹配结果</div>
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>日期</th>
-            <th>单据号</th>
-            <th>B 组单据行</th>
-            <th>投注类型</th>
-            <th style="text-align:right">金额 (MYR)</th>
-          </tr>
-        </thead>
-        <tbody id="resultBody"></tbody>
-      </table>
+  <!-- 2. WhatsApp preview (inside GT section, shown after match) -->
+  <div class="gt-section" id="gtSection" style="display:none">
+    <!-- WhatsApp preview on top -->
+    <div class="wa-preview" style="background:#e0f7f7;border-color:#a7d8d8;margin-bottom:14px">
+      <div class="wa-preview-header">
+        <span class="wa-label" style="color:#2d7a7a">📱 WhatsApp 格式预览</span>
+        <button class="btn-copy" onclick="copyWA()">复制</button>
+      </div>
+      <div class="wa-text" id="waText"></div>
+    </div>
+
+    <!-- 3. Match results -->
+    <div class="results-wrap" id="resultsWrap" style="display:block">
+      <div class="section-title">匹配结果</div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>日期</th>
+              <th>单据号</th>
+              <th>B 组单据行</th>
+              <th>投注类型</th>
+              <th style="text-align:right">金额 (MYR)</th>
+            </tr>
+          </thead>
+          <tbody id="resultBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4. GT summary (last) -->
+    <div style="margin-top:16px">
+      <div class="gt-header">
+        <span class="gt-title">A 组 — GT 汇总</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">共 <em id="gtCount" style="color:var(--accent);font-style:normal">0</em> 张单据</span>
+        <button class="btn btn-export" style="margin-left:auto;padding:7px 16px;font-size:11px" onclick="exportGT()" id="btnExportGT">⬇ 导出GT表</button>
+      </div>
+      <div class="gt-table-wrap">
+        <table class="gt-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>单据号</th>
+              <th class="num">RM</th>
+              <th class="num">SGD</th>
+              <th class="num">扣</th>
+              <th class="num">扣中字</th>
+              <th class="num">尚欠</th>
+            </tr>
+          </thead>
+          <tbody id="gtBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div><!-- end wrap -->
@@ -969,10 +973,34 @@ function parseB(text) {
 
   let i = 0;
   while (i < lines.length) {
-    const line = lines[i];
-    const dm = line.match(/^\((\d{4}-\d{2}-\d{2})\)$/);
+    let line = lines[i];
+
+    // ── Date detection ──────────────────────────────────────────────────────
+
+    // Format 1: standalone "(2026-02-01)" on its own line
+    let dm = line.match(/^\((\d{4}-\d{2}-\d{2})\)$/);
     if (dm) { currentDateB = dm[1]; i++; continue; }
 
+    // Format 2: WhatsApp header "[01/03, 09:16] Name: (2026-02-01)"
+    // Extract the ISO date from anywhere in the line
+    dm = line.match(/\((\d{4}-\d{2}-\d{2})\)/);
+    if (dm) {
+      currentDateB = dm[1];
+      // Strip the WhatsApp prefix so the rest of parsing isn't confused
+      // The actual receipt data starts on the NEXT line after this header
+      i++; continue;
+    }
+
+    // Format 3: WhatsApp header with date like "[01/03, 09:16]" — fallback
+    // (only use if no ISO date found yet)
+    dm = line.match(/^\[(\d{1,2})\/(\d{2}),/);
+    if (dm && !currentDateB) {
+      const yr = new Date().getFullYear();
+      currentDateB = `${yr}-${dm[2]}-${String(dm[1]).padStart(2,'0')}`;
+      i++; continue;
+    }
+
+    // ── Record detection ─────────────────────────────────────────────────────
     const m = line.match(/\((\d{5})\)/);
     if (m) {
       const docNo = m[1];
@@ -1050,8 +1078,8 @@ function runMatch() {
   document.getElementById('sMatch').textContent = matchedRows.length;
   document.getElementById('statRow').style.display = 'flex';
   document.getElementById('btnExport').disabled = matchedRows.length === 0;
-  document.getElementById('resultsWrap').classList.add('show');
-  document.getElementById('gtSection').style.display = gtRows.length ? 'block' : 'none';
+  document.getElementById('gtSection').style.display = 'block';
+  document.getElementById('outcSection').style.display = gtRows.length ? 'block' : 'none';
   showToast(matchedRows.length ? `匹配到 ${matchedRows.length} 条，GT ${gtRows.length} 张` : '没有匹配结果');
 }
 
@@ -1496,11 +1524,60 @@ function getOutCText() {
   return out;
 }
 
-function copyOutC() {
-  const text = getOutCText();
+function copyOutC(mode) {
+  const rows = gtRows;
+  const { rmMap, sgdMap } = buildStrikeMap(matchedRows);
+  const totalRM    = rows.reduce((s,r) => s + r.rm, 0);
+  const totalSGD   = rows.reduce((s,r) => s + r.sgd, 0);
+  const grandTotal = totalRM + totalSGD;
+  const discount   = Math.floor(grandTotal / 10);
+  const totalKZ    = rows.reduce((s,r) => s + r.kouZhongZi, 0);
+  const balance    = grandTotal - discount - totalKZ;
+
+  // Build lines
+  const dataLines = [];
+  for (const r of rows) {
+    const rmS  = (rmMap[r.docNo]  || []).join(' / ');
+    const sgdS = (sgdMap[r.docNo] || []).join(' / ');
+    const strike = [rmS, sgdS].filter(Boolean).join(' | ');
+    dataLines.push({ date: r.date, rm: r.rm||'', sgd: r.sgd||'', strike });
+  }
+
+  // Column widths for alignment
+  const col1 = 10; // date
+  const col2 = 6;  // RM
+  const col3 = 6;  // SGD
+
+  const pad = (s, n) => String(s).padEnd(n);
+  const padL = (s, n) => String(s).padStart(n);
+
+  const header = pad('Date', col1) + pad('RM', col2) + pad('SGD', col3) + 'Strike 中字';
+  const sep    = '─'.repeat(header.length > 30 ? header.length : 30);
+
+  const bodyLines = dataLines.map(r =>
+    pad(r.date, col1) + pad(r.rm, col2) + pad(r.sgd, col3) + (r.strike || '')
+  );
+
+  const summaryLines = [
+    pad('Total 总数', col1 + col2 - 2) + padL(totalRM, col2),
+    pad('Discount 扣', col1 + col2 - 2) + padL(`-${discount}`, col2),
+    pad('Strike 扣中字', col1 + col2 - 2) + padL(`-${totalKZ ? totalKZ.toFixed(2) : 0}`, col2),
+    pad('Balance 尚欠', col1 + col2 - 2) + padL(balance.toFixed(2), col2),
+  ];
+
+  let text;
+  if (mode === 'backtick') {
+    // Wrap each line in backticks for WhatsApp monospace
+    const allLines = [header, sep, ...bodyLines, sep, ...summaryLines];
+    text = allLines.map(l => '`' + l + '`').join('\n');
+  } else {
+    // Plain space-aligned, no backticks
+    text = [header, sep, ...bodyLines, sep, ...summaryLines].join('\n');
+  }
+
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text)
-      .then(() => showToast('输出C已复制，可直接粘贴到Excel'))
+      .then(() => showToast(mode === 'backtick' ? '已复制 格式A（等宽）' : '已复制 格式B（空格）'))
       .catch(() => fallbackCopy(text));
   } else {
     fallbackCopy(text);

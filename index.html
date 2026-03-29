@@ -267,7 +267,7 @@
     <span class="outc-title">输出 C — 精装汇总表</span>
     <div class="outc-btns">
       <button class="btn-copy" style="border-color:#7c3aed;color:#7c3aed" onclick="exportOutC()">⬇ Excel</button>
-      <button class="btn-copy" style="border-color:#7c3aed;color:#7c3aed" onclick="generateImage()">📷 图片</button>
+      <button class="btn-copy" style="border-color:#7c3aed;color:#7c3aed" onclick="generateImage()">📤 发送图片</button>
       <button class="btn-copy" style="border-color:#7c3aed;color:#7c3aed" onclick="downloadImage()">⬇ 存图</button>
     </div>
   </div>
@@ -951,10 +951,11 @@ function generateImage() {
   // Separator
   sep(y); y += LH;
 
-  // Measure EN abbreviation width for summary rows
+  // Measure EN abbreviation width for summary rows — use widest word to align all
   ctx.font = `bold ${FS}px monospace`;
-  const EN_W = Math.ceil(ctx.measureText('Disc').width) + 2; // widest abbrev
+  const EN_W = Math.ceil(ctx.measureText('Total').width) + 2; // fixed to widest
   const ZH_FS = FS - 4;
+  const ZH_GAP = 6; // gap between EN and ZH
 
   for (const s of summaryRows) {
     let bg = '#f3f4f6', textColor = '#374151';
@@ -970,9 +971,9 @@ function generateImage() {
     ctx.textBaseline = 'middle';
     ctx.fillText(s.en, xs[0] + CELL, y + LH / 2);
 
-    // Chinese label — smaller sans-serif, right after EN, vertically centered
+    // Chinese label — smaller sans-serif, right after EN fixed width + gap
     ctx.font = `${ZH_FS}px sans-serif`;
-    ctx.fillText(s.zh, xs[0] + CELL + EN_W + 4, y + LH / 2);
+    ctx.fillText(s.zh, xs[0] + CELL + EN_W + ZH_GAP, y + LH / 2);
 
     // Value — monospace, right-aligned in RM column
     ctx.font = `bold ${FS}px monospace`;
@@ -987,15 +988,29 @@ function generateImage() {
   ctx.lineWidth = 1;
   ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
 
-  // Convert canvas to <img> for long-press save on mobile
-  const dataURL = canvas.toDataURL('image/png');
-  const imgEl = document.getElementById('outcImg');
-  imgEl.src = dataURL;
-  imgEl.style.display = 'block';
-  canvas.style.display = 'none';
+  // Convert canvas to blob and share via Web Share API (no URL)
+  canvas.toBlob(async (blob) => {
+    const imgEl = document.getElementById('outcImg');
+    const dataURL = canvas.toDataURL('image/png');
+    imgEl.src = dataURL;
+    imgEl.style.display = 'block';
+    canvas.style.display = 'none';
+    document.getElementById('imgPreview').style.display = 'block';
 
-  document.getElementById('imgPreview').style.display = 'block';
-  showToast('图片已生成！长按图片 → 保存到相册 → 发送到 WhatsApp');
+    // Try Web Share API to share image directly without URL
+    if (navigator.share && navigator.canShare) {
+      const file = new File([blob], `单据汇总_${new Date().toISOString().slice(0,10)}.png`, { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: '单据汇总' });
+          return;
+        } catch(e) {
+          // User cancelled or error — fall through to show image
+        }
+      }
+    }
+    showToast('图片已生成！长按图片 → 保存到相册 → 发送到 WhatsApp');
+  }, 'image/png');
 }
 
 function downloadImage() {

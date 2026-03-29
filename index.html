@@ -971,9 +971,11 @@ function generateImage() {
     ctx.textBaseline = 'middle';
     ctx.fillText(s.en, xs[0] + CELL, y + LH / 2);
 
-    // Chinese label — smaller sans-serif, right after EN fixed width + gap
+    // Chinese label — right-aligned to a fixed anchor point (just before value col)
+    const zhAnchor = xs[1] - 10; // fixed right edge for Chinese text
     ctx.font = `${ZH_FS}px sans-serif`;
-    ctx.fillText(s.zh, xs[0] + CELL + EN_W + ZH_GAP, y + LH / 2);
+    ctx.textAlign = 'right';
+    ctx.fillText(s.zh, zhAnchor, y + LH / 2);
 
     // Value — monospace, right-aligned in RM column
     ctx.font = `bold ${FS}px monospace`;

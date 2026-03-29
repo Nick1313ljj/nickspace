@@ -404,10 +404,13 @@ function refreshUI() {
       list.innerHTML = '';
       keys.forEach(k => {
         const recs = getData(k);
+        const realRecs = recs.filter(r => !r._noWin);
+        const noWinRecs = recs.filter(r => r._noWin);
         total += recs.length;
         const tag = document.createElement('span');
         tag.className = `month-tag ali-${grp.toLowerCase()}`;
-        tag.innerHTML = `${keyLabel(k)} <em>${recs.length}条</em> <button class="del-month" onclick="confirmDel('${grp}','${k}')">×</button>`;
+        const noWinNote = noWinRecs.length ? ` <span style="font-size:9px;color:var(--muted)">(+${noWinRecs.length}无中奖)</span>` : '';
+        tag.innerHTML = `${keyLabel(k)} <em>${realRecs.length}条</em>${noWinNote} <button class="del-month" onclick="confirmDel('${grp}','${k}')">×</button>`;
         list.appendChild(tag);
       });
     }
@@ -445,8 +448,11 @@ function doAdd(grp) {
   let added = 0, skipped = 0;
   for (const [k, rs] of Object.entries(groups)) {
     const existing = getData(k);
-    const ids = new Set(existing.map(r => r.docNo+'|'+r.line+'|'+r.betType));
-    const newOnes = rs.filter(r => !ids.has(r.docNo+'|'+r.line+'|'+r.betType));
+    const ids = new Set(existing.map(r => r.docNo+'|'+r.dateB+(r._noWin?'|nowin':'')));
+    const newOnes = rs.filter(r => {
+      const key = r.docNo+'|'+r.dateB+(r._noWin?'|nowin':'');
+      return !ids.has(key);
+    });
     skipped += rs.length - newOnes.length;
     added += newOnes.length;
     if (newOnes.length) saveData(k, [...existing, ...newOnes]);
@@ -495,6 +501,7 @@ function toggleDateCheck() {
     const recs = getAllRecords().filter(r => r._grp === grp);
     if (!recs.length) return;
     const dateSet = new Set(recs.map(r => r.dateB).filter(Boolean));
+    const noWinDates = new Set(recs.filter(r => r._noWin).map(r => r.dateB).filter(Boolean));
     const byMonth = {};
     [...dateSet].sort().forEach(d => {
       const mo = d.slice(0,7);
@@ -513,7 +520,10 @@ function toggleDateCheck() {
       }
       html += `<div style="margin-bottom:8px;padding-left:8px">`;
       html += `<div style="color:var(--text);font-weight:600">${y}年${parseInt(mn)}月</div>`;
-      html += `<div style="color:var(--accent)">✓ ${dates.map(d=>d.slice(8).replace(/^0/,'')).join('、')} 日</div>`;
+      html += `<div style="color:var(--accent)">✓ ${dates.map(d => {
+        const day = d.slice(8).replace(/^0/,'');
+        return noWinDates.has(d) ? `<span style="color:var(--muted)">${day}(无中奖)</span>` : day;
+      }).join('、')} 日</div>`;
       if (missing.length) html += `<div style="color:var(--warn)">⚠ 缺少：${missing.join('、')} 日</div>`;
       else html += `<div style="color:var(--muted)">本月完整</div>`;
       html += `</div>`;
@@ -559,13 +569,26 @@ function parseB(text) {
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
-    // ISO date in parens anywhere in line
+
+    // ISO date in parens anywhere in line (including WhatsApp headers)
     let dm = line.match(/\((\d{4}-\d{2}-\d{2})\)/);
     if (dm) { curDate = dm[1]; i++; continue; }
+
     // Standalone ISO date
     dm = line.match(/^(\d{4}-\d{2}-\d{2})$/);
     if (dm) { curDate = dm[1]; i++; continue; }
 
+    // "NO WINNING RECORDS" — store a placeholder record so the date is tracked
+    if (/NO WINNING RECORDS/i.test(line) && curDate) {
+      // Only add if we don't already have a record for this date
+      const alreadyHas = records.some(r => r.dateB === curDate && r._noWin);
+      if (!alreadyHas) {
+        records.push({ docNo:'__NOWIN__', line:'NO WINNING RECORDS', betType:'', amount:'', dateB:curDate, _noWin:true });
+      }
+      i++; continue;
+    }
+
+    // Normal 5-digit doc number
     const m = line.match(/\((\d{5})\)/);
     if (m) {
       const docNo = m[1];
@@ -653,6 +676,7 @@ function runMatch() {
 
   matchedRows = [];
   for (const rec of allB) {
+    if (rec._noWin) continue; // skip NO WINNING RECORDS placeholders
     if (aMap.has(rec.docNo)) {
       const dateFromA = aMap.get(rec.docNo);
       const dateA = dateFromA || rec.dateB || '(未识别)';

@@ -841,34 +841,35 @@ function generateImage() {
 
   // Summary rows
   const summaryRows = [
-    { label: 'Total 总数',    val: String(grand || ''), type: 'total' },
-    { label: 'Discount 扣',   val: `-${disc}`,           type: 'discount' },
-    { label: 'Strike 扣中字', val: `-${tKZ ? tKZ.toFixed(2) : 0}`, type: 'strike' },
-    { label: 'Balance 尚欠',  val: bal.toFixed(2),       type: 'balance' },
+    { en: 'Total',  zh: '总数',   val: String(grand || ''), type: 'total' },
+    { en: 'Disc',   zh: '扣',     val: `-${disc}`,           type: 'discount' },
+    { en: 'Stk',    zh: '扣中字', val: `-${tKZ ? tKZ.toFixed(2) : 0}`, type: 'strike' },
+    { en: 'Bal',    zh: '尚欠',   val: bal.toFixed(2),       type: 'balance' },
   ];
 
   // Canvas setup
   const DPR   = window.devicePixelRatio || 2;
-  const FS    = 15;        // font size px (logical)
-  const LH    = 26;        // line height
-  const PAD   = 14;        // outer padding
-  const CELL  = 6;         // inner cell padding
+  const FS    = 16;        // font size px (logical)
+  const LH    = 30;        // line height
+  const PAD   = 16;        // outer padding
+  const CELL  = 8;         // inner cell padding
 
-  // Column widths (logical px)
-  const COL = [88, 50, 50, 0]; // date, RM, SGD, strike (auto)
+  // Column widths (logical px) — wide enough for content
+  const COL = [100, 56, 56, 0]; // date, RM, SGD, strike (auto)
 
   // Use offscreen canvas to measure
   const tmpC  = document.createElement('canvas');
   const tmpCx = tmpC.getContext('2d');
-  tmpCx.font  = `${FS}px monospace`;
+  tmpCx.font  = `bold ${FS}px monospace`;
 
   // Measure max strike width
-  let maxStrike = 80;
+  let maxStrike = 100;
   for (const r of dataRows) {
+    tmpCx.font = `${FS}px monospace`;
     const w = tmpCx.measureText(r[3]).width;
     if (w > maxStrike) maxStrike = w;
   }
-  COL[3] = Math.ceil(maxStrike) + CELL * 2 + 10;
+  COL[3] = Math.ceil(maxStrike) + CELL * 2 + 16;
 
   const totalCols = COL.reduce((a, b) => a + b, 0);
   const W = totalCols + PAD * 2;
@@ -928,10 +929,10 @@ function generateImage() {
 
   // Header row
   rowBg(y, '#e5e7eb');
-  cell('Date',     xs[0] + CELL, y, 'left',  '#4b5563', true);
-  cell('RM',       xs[1] + COL[1] - CELL, y, 'right', '#4b5563', true);
-  cell('SGD',      xs[2] + COL[2] - CELL, y, 'right', '#4b5563', true);
-  cell('Strike 中字', xs[3] + CELL, y, 'left',  '#4b5563', true);
+  cell('Date', xs[0] + CELL,              y, 'left',  '#4b5563', true);
+  cell('RM',   xs[1] + COL[1] - CELL,     y, 'right', '#4b5563', true);
+  cell('SGD',  xs[2] + COL[2] - CELL,     y, 'right', '#4b5563', true);
+  cell('Stk',  xs[3] + CELL,              y, 'left',  '#4b5563', true);
   y += LH;
 
   // Separator
@@ -950,15 +951,34 @@ function generateImage() {
   // Separator
   sep(y); y += LH;
 
-  // Summary rows
+  // Measure EN abbreviation width for summary rows
+  ctx.font = `bold ${FS}px monospace`;
+  const EN_W = Math.ceil(ctx.measureText('Disc').width) + 2; // widest abbrev
+  const ZH_FS = FS - 4;
+
   for (const s of summaryRows) {
     let bg = '#f3f4f6', textColor = '#374151';
     if (s.type === 'balance')  { bg = '#fef08a'; textColor = '#854d0e'; }
     if (s.type === 'discount') { textColor = '#dc6027'; }
     if (s.type === 'strike')   { textColor = '#2563eb'; }
     rowBg(y, bg);
-    cell(s.label, xs[0] + CELL,          y, 'left',  textColor, true);
-    cell(s.val,   xs[1] + COL[1] - CELL, y, 'right', textColor, true);
+
+    // English abbreviation — monospace, bold, fixed position
+    ctx.fillStyle = textColor;
+    ctx.font = `bold ${FS}px monospace`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(s.en, xs[0] + CELL, y + LH / 2);
+
+    // Chinese label — smaller sans-serif, right after EN, vertically centered
+    ctx.font = `${ZH_FS}px sans-serif`;
+    ctx.fillText(s.zh, xs[0] + CELL + EN_W + 4, y + LH / 2);
+
+    // Value — monospace, right-aligned in RM column
+    ctx.font = `bold ${FS}px monospace`;
+    ctx.textAlign = 'right';
+    ctx.fillText(s.val, xs[1] + COL[1] - CELL, y + LH / 2);
+
     y += LH;
   }
 

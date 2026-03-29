@@ -294,7 +294,10 @@
 
 <!-- ══ 3. Match results ══ -->
 <div class="results-section" id="resultsSection">
-  <div class="section-title">匹配结果</div>
+  <div class="section-title" style="display:flex;align-items:center">
+    <span>匹配结果</span>
+    <button class="btn-copy" style="margin-left:auto;border-color:#7c3aed;color:#7c3aed;background:#f3e8ff;font-size:10px;padding:3px 10px" onclick="generateMatchImage()">📤 发送图片</button>
+  </div>
   <div class="table-scroll">
     <table>
       <thead><tr>
@@ -302,6 +305,12 @@
       </tr></thead>
       <tbody id="resultBody"></tbody>
     </table>
+  </div>
+  <!-- Match result image preview -->
+  <div id="matchImgPreview" style="display:none;margin-top:10px;text-align:center">
+    <canvas id="matchCanvas" style="display:none"></canvas>
+    <img id="matchImg" style="max-width:100%;border:1px solid var(--border);display:none;border-radius:4px" alt="匹配结果图片">
+    <p style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px">长按图片 → 保存到相册 → 发送到 WhatsApp</p>
   </div>
 </div>
 
@@ -826,6 +835,109 @@ function renderOutC(rows) {
 // IMAGE EXPORT — render Output C to canvas then show as <img>
 // ════════════════════════════════════════════════════════
 function generateImage2() { generateImage(true); }
+
+// ════════════════════════════════════════════════════════
+// MATCH RESULT IMAGE
+// ════════════════════════════════════════════════════════
+function generateMatchImage() {
+  if (!matchedRows.length) { showToast('没有匹配结果'); return; }
+
+  const DPR = window.devicePixelRatio || 2;
+  const FS  = 13, LH = 24, PAD = 14, CELL = 6;
+
+  // Columns: 日期, 单据号, 中奖资料行, 投注类型, 金额, 来源
+  const headers = ['Date', 'Doc', 'Record', 'Type', 'Amt', 'Src'];
+  const colData  = matchedRows.map(r => [
+    r.dateA, r.docNo, r.line, r.betType,
+    r.amount || '—',
+    r._grp === 'A' ? 'Ali-A' : 'Ali-B'
+  ]);
+
+  // Measure col widths
+  const tmpC = document.createElement('canvas');
+  const tmpX = tmpC.getContext('2d');
+  tmpX.font = `${FS}px monospace`;
+
+  const cols = headers.length;
+  const colW = headers.map((h, i) => {
+    let max = tmpX.measureText(h).width;
+    for (const row of colData) {
+      const w = tmpX.measureText(String(row[i])).width;
+      if (w > max) max = w;
+    }
+    return Math.ceil(max) + CELL * 2;
+  });
+
+  const W = colW.reduce((a, b) => a + b, 0) + PAD * 2;
+  const H = (1 + 1 + matchedRows.length) * LH + PAD * 2;
+
+  const canvas = document.getElementById('matchCanvas');
+  canvas.width  = W * DPR; canvas.height = H * DPR;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(DPR, DPR);
+
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+
+  // Col x positions
+  const xs = [PAD];
+  for (let i = 0; i < colW.length - 1; i++) xs.push(xs[i] + colW[i]);
+
+  let y = PAD;
+
+  // Header
+  ctx.fillStyle = '#e5e7eb'; ctx.fillRect(0, y, W, LH);
+  headers.forEach((h, i) => {
+    ctx.fillStyle = '#4b5563';
+    ctx.font = `bold ${FS}px monospace`;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(h, xs[i] + CELL, y + LH / 2);
+  });
+  y += LH;
+
+  // Separator
+  ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 0.8;
+  ctx.beginPath(); ctx.moveTo(PAD, y + LH/2); ctx.lineTo(W - PAD, y + LH/2); ctx.stroke();
+  y += LH;
+
+  // Data rows
+  for (const [ri, row] of colData.entries()) {
+    if (ri % 2 === 1) { ctx.fillStyle = '#f9fafb'; ctx.fillRect(0, y, W, LH); }
+    row.forEach((val, i) => {
+      let color = '#374151';
+      if (i === 1) color = '#00a87a'; // docNo green
+      if (i === 4) color = '#2563eb'; // amount blue
+      if (i === 5) color = val === 'Ali-A' ? '#0ea5e9' : '#f59e0b'; // source color
+      ctx.fillStyle = color;
+      ctx.font = `${FS}px monospace`;
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText(String(val), xs[i] + CELL, y + LH / 2);
+    });
+    y += LH;
+  }
+
+  // Border
+  ctx.strokeStyle = '#d1d5db'; ctx.lineWidth = 1;
+  ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
+
+  // To img
+  canvas.toBlob(async (blob) => {
+    const imgEl = document.getElementById('matchImg');
+    imgEl.src = canvas.toDataURL('image/png');
+    imgEl.style.display = 'block';
+    canvas.style.display = 'none';
+    document.getElementById('matchImgPreview').style.display = 'block';
+
+    if (navigator.share && navigator.canShare) {
+      const file = new File([blob], `匹配结果_${new Date().toISOString().slice(0,10)}.png`, { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file], title: '匹配结果' }); return; }
+        catch(e) {}
+      }
+    }
+    showToast('图片已生成！长按图片 → 保存 → 发送到 WhatsApp');
+  }, 'image/png');
+}
 
 function generateImage(noDiscount = false) {
   const rows = gtRows;

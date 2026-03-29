@@ -276,8 +276,9 @@
   </div>
   <!-- Canvas image preview -->
   <div class="img-preview" id="imgPreview" style="display:none">
-    <canvas id="outcCanvas"></canvas>
-    <p style="font-family:var(--mono);font-size:11px;color:var(--muted)">长按图片保存 → 直接发送到 WhatsApp</p>
+    <canvas id="outcCanvas" style="display:none"></canvas>
+    <img id="outcImg" style="max-width:100%;border:1px solid var(--border);display:none;border-radius:4px" alt="输出C图片">
+    <p style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px">长按图片 → 保存到相册 → 发送到 WhatsApp</p>
   </div>
 </div>
 
@@ -814,100 +815,175 @@ function renderOutC(rows) {
 }
 
 // ════════════════════════════════════════════════════════
-// IMAGE EXPORT — render Output C to canvas
+// IMAGE EXPORT — render Output C to canvas then show as <img>
 // ════════════════════════════════════════════════════════
 function generateImage() {
-  const rows=gtRows;
+  const rows = gtRows;
   if (!rows.length) { showToast('没有数据'); return; }
-  const {rmMap,sgdMap}=buildStrikeMap(matchedRows);
-  const sorted=[...rows].sort((a,b)=>a.date.localeCompare(b.date));
-  const tRM=rows.reduce((s,r)=>s+r.rm,0);
-  const tSGD=rows.reduce((s,r)=>s+r.sgd,0);
-  const grand=tRM+tSGD;
-  const disc=Math.floor(grand/10);
-  const tKZ=rows.reduce((s,r)=>s+r.kouZhongZi,0);
-  const bal=grand-disc-tKZ;
 
-  // Build text lines
-  const lines=[];
-  lines.push(['Date','RM','SGD','Strike 中字']);
-  lines.push('sep');
+  const { rmMap, sgdMap } = buildStrikeMap(matchedRows);
+  const sorted = [...rows].sort((a, b) => a.date.localeCompare(b.date));
+  const tRM  = rows.reduce((s, r) => s + r.rm, 0);
+  const tSGD = rows.reduce((s, r) => s + r.sgd, 0);
+  const grand = tRM + tSGD;
+  const disc  = Math.floor(grand / 10);
+  const tKZ   = rows.reduce((s, r) => s + r.kouZhongZi, 0);
+  const bal   = grand - disc - tKZ;
+
+  // Build data rows: [date, rm, sgd, strike]
+  const dataRows = [];
   for (const r of sorted) {
-    const rmS=(rmMap[r.docNo]||[]).join(' / ');
-    const sgdS=(sgdMap[r.docNo]||[]).join(' / ');
-    const strike=[rmS,sgdS].filter(Boolean).join(' | ');
-    lines.push([r.date, r.rm||'', r.sgd||'', strike]);
+    const rmS  = (rmMap[r.docNo]  || []).join(' / ');
+    const sgdS = (sgdMap[r.docNo] || []).join(' / ');
+    const strike = [rmS, sgdS].filter(Boolean).join(' | ');
+    dataRows.push([r.date, r.rm ? String(r.rm) : '', r.sgd ? String(r.sgd) : '', strike]);
   }
-  lines.push('sep');
-  lines.push(['Total 总数', tRM||'','','']);
-  lines.push(['Discount 扣', `-${disc}`,'','']);
-  lines.push(['Strike 扣中字', `-${tKZ?tKZ.toFixed(2):0}`,'','']);
-  lines.push(['Balance 尚欠', bal.toFixed(2),'','']);
 
-  // Canvas settings
-  const fs=15, pad=14, lh=24, colW=[90,50,50,0];
-  const canvas=document.getElementById('outcCanvas');
-  const ctx=canvas.getContext('2d');
-  ctx.font=`${fs}px monospace`;
+  // Summary rows
+  const summaryRows = [
+    { label: 'Total 总数',    val: String(grand || ''), type: 'total' },
+    { label: 'Discount 扣',   val: `-${disc}`,           type: 'discount' },
+    { label: 'Strike 扣中字', val: `-${tKZ ? tKZ.toFixed(2) : 0}`, type: 'strike' },
+    { label: 'Balance 尚欠',  val: bal.toFixed(2),       type: 'balance' },
+  ];
 
-  // Measure strike col width
-  let maxStrike=0;
-  for (const l of lines) {
-    if (l==='sep') continue;
-    const s=String(l[3]);
-    const w=ctx.measureText(s).width;
-    if (w>maxStrike) maxStrike=w;
+  // Canvas setup
+  const DPR   = window.devicePixelRatio || 2;
+  const FS    = 15;        // font size px (logical)
+  const LH    = 26;        // line height
+  const PAD   = 14;        // outer padding
+  const CELL  = 6;         // inner cell padding
+
+  // Column widths (logical px)
+  const COL = [88, 50, 50, 0]; // date, RM, SGD, strike (auto)
+
+  // Use offscreen canvas to measure
+  const tmpC  = document.createElement('canvas');
+  const tmpCx = tmpC.getContext('2d');
+  tmpCx.font  = `${FS}px monospace`;
+
+  // Measure max strike width
+  let maxStrike = 80;
+  for (const r of dataRows) {
+    const w = tmpCx.measureText(r[3]).width;
+    if (w > maxStrike) maxStrike = w;
   }
-  colW[3]=Math.max(120,maxStrike+10);
+  COL[3] = Math.ceil(maxStrike) + CELL * 2 + 10;
 
-  const totalW=colW.reduce((a,b)=>a+b,0)+pad*2;
-  const totalH=(lines.length+1)*lh+pad*2;
-  canvas.width=totalW; canvas.height=totalH;
+  const totalCols = COL.reduce((a, b) => a + b, 0);
+  const W = totalCols + PAD * 2;
+
+  // Count rows: header + sep + data + sep + summary
+  const totalLines = 1 + 1 + dataRows.length + 1 + summaryRows.length;
+  const H = totalLines * LH + PAD * 2 + 8;
+
+  // Create real canvas scaled for device
+  const canvas = document.getElementById('outcCanvas');
+  canvas.width  = W  * DPR;
+  canvas.height = H  * DPR;
+  canvas.style.width  = W  + 'px';
+  canvas.style.height = H  + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(DPR, DPR);
 
   // Background
-  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,totalW,totalH);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
 
-  // Draw
-  let y=pad+lh;
-  const x0=pad;
-  const xs=[x0, x0+colW[0], x0+colW[0]+colW[1], x0+colW[0]+colW[1]+colW[2]];
-
-  for (const line of lines) {
-    if (line==='sep') {
-      ctx.strokeStyle='#aaa'; ctx.beginPath(); ctx.moveTo(pad,y-lh/2); ctx.lineTo(totalW-pad,y-lh/2); ctx.stroke();
-      continue;
-    }
-    const [a,b,c,d]=line.map(String);
-    // Highlight balance row
-    if (a.startsWith('Balance')) {
-      ctx.fillStyle='#fef08a'; ctx.fillRect(0,y-lh+4,totalW,lh);
-      ctx.fillStyle='#854d0e'; ctx.font=`bold ${fs}px monospace`;
-    } else if (a.startsWith('Total')||a.startsWith('Discount')||a.startsWith('Strike')) {
-      ctx.fillStyle='#f3f4f6'; ctx.fillRect(0,y-lh+4,totalW,lh);
-      ctx.fillStyle='#374151'; ctx.font=`bold ${fs}px monospace`;
-    } else if (line===lines[0]) {
-      ctx.fillStyle='#e5e7eb'; ctx.fillRect(0,y-lh+4,totalW,lh);
-      ctx.fillStyle='#6b7280'; ctx.font=`bold ${fs}px monospace`;
-    } else {
-      ctx.fillStyle='#1a1d23'; ctx.font=`${fs}px monospace`;
-    }
-    ctx.fillText(a, xs[0], y);
-    ctx.fillText(b, xs[1], y);
-    ctx.fillText(c, xs[2], y);
-    ctx.fillText(d, xs[3], y);
-    y+=lh;
+  // Helper: draw a row background
+  function rowBg(y, color, h) {
+    ctx.fillStyle = color;
+    ctx.fillRect(0, y, W, h || LH);
   }
 
-  document.getElementById('imgPreview').style.display='block';
-  showToast('图片已生成，长按保存 → 发送到 WhatsApp');
+  // Helper: draw text in cell
+  function cell(text, x, y, align, color, bold) {
+    ctx.fillStyle = color || '#1a1d23';
+    ctx.font = `${bold ? 'bold ' : ''}${FS}px monospace`;
+    ctx.textAlign = align || 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(text), x, y + LH / 2);
+  }
+
+  // Helper: draw separator line
+  function sep(y) {
+    ctx.strokeStyle = '#9ca3af';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(PAD, y + LH / 2);
+    ctx.lineTo(W - PAD, y + LH / 2);
+    ctx.stroke();
+  }
+
+  // Column x positions (left-aligned)
+  const xs = [
+    PAD,
+    PAD + COL[0],
+    PAD + COL[0] + COL[1],
+    PAD + COL[0] + COL[1] + COL[2],
+  ];
+
+  let y = PAD;
+
+  // Header row
+  rowBg(y, '#e5e7eb');
+  cell('Date',     xs[0] + CELL, y, 'left',  '#4b5563', true);
+  cell('RM',       xs[1] + COL[1] - CELL, y, 'right', '#4b5563', true);
+  cell('SGD',      xs[2] + COL[2] - CELL, y, 'right', '#4b5563', true);
+  cell('Strike 中字', xs[3] + CELL, y, 'left',  '#4b5563', true);
+  y += LH;
+
+  // Separator
+  sep(y); y += LH;
+
+  // Data rows
+  for (const [i, r] of dataRows.entries()) {
+    if (i % 2 === 1) rowBg(y, '#f9fafb');
+    cell(r[0], xs[0] + CELL,           y, 'left',  '#374151');
+    cell(r[1], xs[1] + COL[1] - CELL,  y, 'right', '#374151');
+    cell(r[2], xs[2] + COL[2] - CELL,  y, 'right', '#374151');
+    cell(r[3], xs[3] + CELL,           y, 'left',  '#2563eb');
+    y += LH;
+  }
+
+  // Separator
+  sep(y); y += LH;
+
+  // Summary rows
+  for (const s of summaryRows) {
+    let bg = '#f3f4f6', textColor = '#374151';
+    if (s.type === 'balance')  { bg = '#fef08a'; textColor = '#854d0e'; }
+    if (s.type === 'discount') { textColor = '#dc6027'; }
+    if (s.type === 'strike')   { textColor = '#2563eb'; }
+    rowBg(y, bg);
+    cell(s.label, xs[0] + CELL,          y, 'left',  textColor, true);
+    cell(s.val,   xs[1] + COL[1] - CELL, y, 'right', textColor, true);
+    y += LH;
+  }
+
+  // Border around whole image
+  ctx.strokeStyle = '#d1d5db';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
+
+  // Convert canvas to <img> for long-press save on mobile
+  const dataURL = canvas.toDataURL('image/png');
+  const imgEl = document.getElementById('outcImg');
+  imgEl.src = dataURL;
+  imgEl.style.display = 'block';
+  canvas.style.display = 'none';
+
+  document.getElementById('imgPreview').style.display = 'block';
+  showToast('图片已生成！长按图片 → 保存到相册 → 发送到 WhatsApp');
 }
 
 function downloadImage() {
-  const canvas=document.getElementById('outcCanvas');
-  if (!canvas.width) { generateImage(); return; }
-  const a=document.createElement('a');
-  a.download=`输出C_${new Date().toISOString().slice(0,10)}.png`;
-  a.href=canvas.toDataURL('image/png');
+  const imgEl = document.getElementById('outcImg');
+  if (!imgEl.src || imgEl.style.display === 'none') { generateImage(); return; }
+  const a = document.createElement('a');
+  a.download = `输出C_${new Date().toISOString().slice(0,10)}.png`;
+  a.href = imgEl.src;
   a.click();
   showToast('图片已下载');
 }

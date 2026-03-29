@@ -268,6 +268,7 @@
     <div class="outc-btns">
       <button class="btn-copy" style="border-color:#7c3aed;color:#7c3aed" onclick="exportOutC()">⬇ Excel</button>
       <button class="btn-copy" style="border-color:#7c3aed;color:#7c3aed" onclick="generateImage()">📤 发送图片</button>
+      <button class="btn-copy" style="border-color:#d97706;color:#92400e;background:#fef3c7" onclick="generateImage2()">📤 发送图片2</button>
       <button class="btn-copy" style="border-color:#7c3aed;color:#7c3aed" onclick="downloadImage()">⬇ 存图</button>
     </div>
   </div>
@@ -824,7 +825,9 @@ function renderOutC(rows) {
 // ════════════════════════════════════════════════════════
 // IMAGE EXPORT — render Output C to canvas then show as <img>
 // ════════════════════════════════════════════════════════
-function generateImage() {
+function generateImage2() { generateImage(true); }
+
+function generateImage(noDiscount = false) {
   const rows = gtRows;
   if (!rows.length) { showToast('没有数据'); return; }
 
@@ -846,8 +849,13 @@ function generateImage() {
     dataRows.push([r.date, r.rm ? String(r.rm) : '', r.sgd ? String(r.sgd) : '', strike]);
   }
 
-  // Summary rows
-  const summaryRows = [
+  // Summary rows — skip Discount if noDiscount mode
+  const bal2 = noDiscount ? grand - tKZ : bal;
+  const summaryRows = noDiscount ? [
+    { en: 'Total',  zh: '总数',   val: String(grand || ''), type: 'total' },
+    { en: 'Stk',    zh: '扣中字', val: `-${tKZ ? tKZ.toFixed(2) : 0}`, type: 'strike' },
+    { en: 'Bal',    zh: '尚欠',   val: bal2.toFixed(2),     type: 'balance' },
+  ] : [
     { en: 'Total',  zh: '总数',   val: String(grand || ''), type: 'total' },
     { en: 'Disc',   zh: '扣',     val: `-${disc}`,           type: 'discount' },
     { en: 'Stk',    zh: '扣中字', val: `-${tKZ ? tKZ.toFixed(2) : 0}`, type: 'strike' },

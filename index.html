@@ -578,8 +578,8 @@ function parseB(text) {
     dm = line.match(/^(\d{4}-\d{2}-\d{2})$/);
     if (dm) { curDate = dm[1]; i++; continue; }
 
-    // "NO WINNING RECORDS" — store a placeholder record so the date is tracked
-    if (/NO WINNING RECORDS/i.test(line) && curDate) {
+    // "NO WINNING RECORDS" or Chinese equivalent — store placeholder so date is tracked
+    if ((/NO WINNING RECORDS/i.test(line) || /没有中奖记录/.test(line)) && curDate) {
       // Only add if we don't already have a record for this date
       const alreadyHas = records.some(r => r.dateB === curDate && r._noWin);
       if (!alreadyHas) {

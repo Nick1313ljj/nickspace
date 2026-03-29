@@ -846,12 +846,15 @@ function generateMatchImage() {
   const FS  = 13, LH = 24, PAD = 14, CELL = 6;
 
   // Columns: 日期, 单据号, 中奖资料行, 投注类型, 金额, 来源
-  const headers = ['Date', 'Doc', 'Record', 'Type', 'Amt', 'Src'];
-  const colData  = matchedRows.map(r => [
-    r.dateA, r.docNo, r.line, r.betType,
-    r.amount || '—',
-    r._grp === 'A' ? 'Ali-A' : 'Ali-B'
-  ]);
+  const headers = ['Date', 'Doc', 'Record', 'Type', 'Amt'];
+  const colData  = matchedRows.map(r => {
+    let amt = parseFloat(r.amount) || 0;
+    if (r._grp === 'B' && amt) amt = Math.round((amt / 1.05) * 100) / 100;
+    return [
+      r.dateA, r.docNo, r.line, r.betType,
+      amt ? (amt % 1 === 0 ? String(amt) : amt.toFixed(2)) : '—'
+    ];
+  });
 
   // Measure col widths
   const tmpC = document.createElement('canvas');
@@ -907,7 +910,6 @@ function generateMatchImage() {
       let color = '#374151';
       if (i === 1) color = '#00a87a'; // docNo green
       if (i === 4) color = '#2563eb'; // amount blue
-      if (i === 5) color = val === 'Ali-A' ? '#0ea5e9' : '#f59e0b'; // source color
       ctx.fillStyle = color;
       ctx.font = `${FS}px monospace`;
       ctx.textAlign = 'left'; ctx.textBaseline = 'middle';

@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>单据匹配工具</title>
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="单据匹配">
+<meta name="theme-color" content="#0f172a">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
@@ -549,7 +555,12 @@ function toggleDateCheck() {
 // ════════════════════════════════════════════════════════
 function parseA(text) {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  const hasDate = lines.some(l => /\d{2}\.\d{2}\.\d{2}\s+\d{3,4}/.test(l) || /\{(\d{4})\}/.test(l));
+  const hasDate = lines.some(l =>
+    /\d{2}\.\d{2}\.\d{2}\s+\d{3,4}/.test(l) ||  // 26.03.22 1815
+    /^\d{6}\s+\d{3,4}/.test(l) ||                 // 260322 1815
+    /^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/.test(l) || // 2026-03-29 02:57
+    /\{(\d{4})\}/.test(l)                          // {0322}
+  );
   const map = new Map();
 
   if (!hasDate) {
@@ -561,12 +572,29 @@ function parseA(text) {
 
   let cur = '';
   for (const line of lines) {
+    // Format: 26.03.22 1815 → YY.MM.DD
     let m = line.match(/(\d{2})\.(\d{2})\.(\d{2})\s+\d{3,4}/);
     if (m) { cur = `20${m[1]}-${m[2]}-${m[3]}`; }
+
+    // Format: 260322 1815 → YYMMDD (no dots)
+    if (!m) {
+      m = line.match(/^(\d{2})(\d{2})(\d{2})\s+\d{3,4}/);
+      if (m) { cur = `20${m[1]}-${m[2]}-${m[3]}`; }
+    }
+
+    // Format: 2026-03-29 02:57 → ISO datetime
+    if (!m) {
+      m = line.match(/^(\d{4})-(\d{2})-(\d{2})\s+\d{2}:\d{2}/);
+      if (m) { cur = `${m[1]}-${m[2]}-${m[3]}`; }
+    }
+
+    // Format: {0322} → MMDD
     m = line.match(/\{(\d{2})(\d{2})\}/);
     if (m) { cur = `${new Date().getFullYear()}-${m[1]}-${m[2]}`; }
+
     m = line.match(/^\[(\d{1,2})\/(\d{1,2}),/);
     if (m && !cur) { const yr=new Date().getFullYear(); cur=`${yr}-${String(m[1]).padStart(2,'0')}-${String(m[2]).padStart(2,'0')}`; }
+
     for (const dm of line.matchAll(/\((\d{5})\)/g))
       if (!map.has(dm[1])) map.set(dm[1], cur||'(未识别)');
   }
@@ -630,9 +658,12 @@ function splitBlocks(text) {
   const blocks = []; let cur = [];
   for (const line of lines) {
     const t = line.trim();
-    if ((/\d{2}\.\d{2}\.\d{2}\s+\d{3,4}/.test(t) || /^\[S88\]/.test(t)) && cur.length) {
-      blocks.push(cur.join('\n')); cur = [];
-    }
+    const isStart =
+      /\d{2}\.\d{2}\.\d{2}\s+\d{3,4}/.test(t) ||  // 26.03.22 1815
+      /^\d{6}\s+\d{3,4}/.test(t) ||                 // 260322 1815
+      /^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/.test(t) || // 2026-03-29 02:57
+      /^\[S88\]/.test(t);                            // [S88]
+    if (isStart && cur.length) { blocks.push(cur.join('\n')); cur = []; }
     cur.push(line);
   }
   if (cur.length) blocks.push(cur.join('\n'));
@@ -645,8 +676,16 @@ function parseAforGT(text) {
     const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
     let dateStr = '';
     for (const line of lines) {
+      // Format: 26.03.22 1815 → DD/MM/YY
       let m = line.match(/(\d{2})\.(\d{2})\.(\d{2})\s+\d{3,4}/);
       if (m) { dateStr=`${m[3]}/${m[2]}/${m[1]}`; break; }
+      // Format: 260322 1815 → YYMMDD (no dots)
+      m = line.match(/^(\d{2})(\d{2})(\d{2})\s+\d{3,4}/);
+      if (m) { dateStr=`${m[3]}/${m[2]}/${m[1]}`; break; }
+      // Format: 2026-03-29 02:57 → ISO datetime
+      m = line.match(/^(\d{4})-(\d{2})-(\d{2})\s+\d{2}:\d{2}/);
+      if (m) { dateStr=`${m[3]}/${m[2]}/${m[1].slice(2)}`; break; }
+      // Format: {0322} → MMDD
       m = line.match(/\{(\d{2})(\d{2})\}/);
       if (m) { const yr=new Date().getFullYear().toString().slice(2); dateStr=`${m[2]}/${m[1]}/${yr}`; break; }
       m = line.match(/\b(\d{2})\/(\d{2})\b/);
@@ -659,7 +698,14 @@ function parseAforGT(text) {
       }
     }
     let docNo='';
-    for (const line of lines) { const m=line.match(/\((\d{5})\)/); if (m){docNo=m[1];break;} }
+    for (const line of lines) {
+      // Standard 5-digit in parens: (90235)
+      const m=line.match(/\((\d{5})\)/);
+      if (m){ docNo=m[1]; break; }
+      // 7km18 style: word+digits+(number) at start of line e.g. "7km18(1)"
+      const m2=line.match(/^([A-Za-z0-9]+\(\d+\))/);
+      if (m2){ docNo=m2[1]; break; }
+    }
     let gtAmt=null, currency='RM';
     for (const line of lines) {
       let m=line.match(/GT[=:](\d+(?:\.\d+)?)/i);

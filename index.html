@@ -885,7 +885,7 @@ function renderOutC(rows) {
 
   html+=`<tr class="sep-row"><td class="left">Total 总数</td><td>${tRM||''}</td><td>${tSGD||''}</td><td></td><td></td></tr>`;
   html+=`<tr class="discount-row"><td class="left">Discount 扣</td><td>${tRM?'-'+discRM:''}</td><td>${tSGD?'-'+discSGD:''}</td><td></td><td></td></tr>`;
-  html+=`<tr class="strike-row"><td class="left">Strike 扣中字</td><td>${tKZrm?'-'+tKZrm.toFixed(2):''}</td><td>${tKZsgd?'-'+tKZsgd.toFixed(2):''}</td><td></td><td></td></tr>`;
+  html+=`<tr class="strike-row"><td class="left">Strike 扣中字</td><td>${tKZrm?'-'+tKZrm.toFixed(2):'-0'}</td><td>${tKZsgd?'-'+tKZsgd.toFixed(2):tSGD?'-0':''}</td><td></td><td></td></tr>`;
   html+=`<tr class="balance-row"><td class="left">Balance 尚欠</td><td>${tRM?balRM.toFixed(2):''}</td><td>${tSGD?balSGD.toFixed(2):''}</td><td></td><td></td></tr>`;
   html+='</tbody>';
   table.innerHTML=html;
@@ -1025,24 +1025,16 @@ function generateImage(noDiscount = false) {
     dataRows.push([r.date, r.rm ? String(r.rm) : '', r.sgd ? String(r.sgd) : '', strike]);
   }
 
-  // Summary rows — RM and SGD shown separately
-  // Format: val = "RM_val" or "RM_val / SGD_val" if both exist
-  const fmtBoth = (rmV, sgdV) => {
-    const parts = [];
-    if (tRM  && rmV  !== '') parts.push(String(rmV));
-    if (tSGD && sgdV !== '') parts.push(`SGD:${sgdV}`);
-    return parts.join('  ');
-  };
-
+  // Summary rows — RM col and SGD col separate
   const summaryRows = noDiscount ? [
-    { en: 'Total', zh: '总数',   val: fmtBoth(tRM||'', tSGD||''),                                    type: 'total' },
-    { en: 'Stk',   zh: '扣中字', val: fmtBoth(tKZrm?`-${tKZrm.toFixed(2)}`:'-0', tKZsgd?`-${tKZsgd.toFixed(2)}`:'-0'), type: 'strike' },
-    { en: 'Bal',   zh: '尚欠',   val: fmtBoth(tRM?(tRM-tKZrm).toFixed(2):'', tSGD?(tSGD-tKZsgd).toFixed(2):''), type: 'balance' },
+    { en:'Total', zh:'总数',   rm:String(tRM||''),                    sgd:String(tSGD||''),                    type:'total' },
+    { en:'Stk',   zh:'扣中字', rm:tKZrm?`-${tKZrm.toFixed(2)}`:'-0', sgd:tSGD?(tKZsgd?`-${tKZsgd.toFixed(2)}`:'-0'):'', type:'strike' },
+    { en:'Bal',   zh:'尚欠',   rm:tRM?(tRM-tKZrm).toFixed(2):'',     sgd:tSGD?(tSGD-tKZsgd).toFixed(2):'',   type:'balance' },
   ] : [
-    { en: 'Total', zh: '总数',   val: fmtBoth(tRM||'', tSGD||''),                                    type: 'total' },
-    { en: 'Disc',  zh: '扣',     val: fmtBoth(tRM?`-${discRM}`:'', tSGD?`-${discSGD}`:''),           type: 'discount' },
-    { en: 'Stk',   zh: '扣中字', val: fmtBoth(tKZrm?`-${tKZrm.toFixed(2)}`:'-0', tKZsgd?`-${tKZsgd.toFixed(2)}`:'-0'), type: 'strike' },
-    { en: 'Bal',   zh: '尚欠',   val: fmtBoth(tRM?balRM.toFixed(2):'', tSGD?balSGD.toFixed(2):''),   type: 'balance' },
+    { en:'Total', zh:'总数',   rm:String(tRM||''),                    sgd:String(tSGD||''),                    type:'total' },
+    { en:'Disc',  zh:'扣',     rm:tRM?`-${discRM}`:'',                sgd:tSGD?`-${discSGD}`:'',               type:'discount' },
+    { en:'Stk',   zh:'扣中字', rm:tKZrm?`-${tKZrm.toFixed(2)}`:'-0', sgd:tSGD?(tKZsgd?`-${tKZsgd.toFixed(2)}`:'-0'):'', type:'strike' },
+    { en:'Bal',   zh:'尚欠',   rm:tRM?balRM.toFixed(2):'',           sgd:tSGD?balSGD.toFixed(2):'',           type:'balance' },
   ];
 
   // Canvas setup
@@ -1178,11 +1170,13 @@ function generateImage(noDiscount = false) {
     ctx.textAlign = 'left';
     ctx.fillText(s.zh, xs[0] + CELL + enW + spaceW, y + LH / 2);
 
-    // Value — right-aligned, but start after EN+ZH combo
-    // Use a fixed anchor well to the right of the label area
+    // RM value — right-aligned in RM column
     ctx.font = `bold ${FS}px monospace`;
     ctx.textAlign = 'right';
-    ctx.fillText(s.val, xs[1] + COL[1] - CELL, y + LH / 2);
+    if (s.rm) ctx.fillText(s.rm, xs[1] + COL[1] - CELL, y + LH / 2);
+
+    // SGD value — right-aligned in SGD column
+    if (s.sgd) ctx.fillText(s.sgd, xs[2] + COL[2] - CELL, y + LH / 2);
 
     y += LH;
   }

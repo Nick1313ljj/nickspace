@@ -806,7 +806,7 @@ function renderMatchTable(rows) {
   for (const r of rows) {
     const src=r._grp==='A'?`<span style="color:var(--ali-a);font-size:10px">Aliapos</span>`:`<span style="color:var(--ali-b);font-size:10px">Alibaba</span>`;
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td class="date">${r.dateA}</td><td class="docno">${r.docNo}</td><td>${esc(r.line)}</td><td style="color:var(--muted)">${esc(r.betType)}</td><td class="amt">${r.amount||'—'}</td><td>${src}</td>`;
+    tr.innerHTML=`<td class="date">${r.dateA}</td><td class="docno">${r.docNo}</td><td>${boldParens(r.line)}</td><td style="color:var(--muted)">${esc(r.betType)}</td><td class="amt">${r.amount||'—'}</td><td>${src}</td>`;
     tbody.appendChild(tr);
   }
 }
@@ -842,6 +842,10 @@ function extractCode(line) {
   const m2=line.match(/([A-Za-z])[-–]?\d+[-–](\d{4})/);
   if (m2) return m2[1].toUpperCase()+m2[2];
   return '';
+}
+
+function boldParens(str) {
+  return esc(str).replace(/([A-Za-z]-\d+-)([\w]+)/, '$1<strong style="color:#111;font-weight:900">$2</strong>');
 }
 
 function buildStrikeMap(matched) {

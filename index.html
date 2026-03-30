@@ -660,11 +660,13 @@ function splitBlocks(text) {
   const blocks = []; let cur = [];
   for (const line of lines) {
     const t = line.trim();
+    // Strip WhatsApp header prefix if present: "[30/03, 22:37] Name: content"
+    const stripped = t.replace(/^\[\d{1,2}\/\d{2},\s*\d{2}:\d{2}\]\s*[^:]*:\s*/, '');
     const isStart =
-      /\d{2}\.\d{2}\.\d{2}\s+\d{3,4}/.test(t) ||  // 26.03.22 1815
-      /^\d{6}\s+\d{3,4}/.test(t) ||                 // 260322 1815
-      /^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/.test(t) || // 2026-03-29 02:57
-      /^\[S88\]/.test(t);                            // [S88]
+      /\d{2}\.\d{2}\.\d{2}\s+\d{3,4}/.test(stripped) ||  // 26.03.22 1815
+      /^\d{6}\s+\d{3,4}/.test(stripped) ||                 // 260322 1815
+      /^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/.test(stripped) || // 2026-03-29 02:57
+      /^\[S88\]/.test(stripped);                            // [S88]
     if (isStart && cur.length) { blocks.push(cur.join('\n')); cur = []; }
     cur.push(line);
   }
@@ -678,6 +680,9 @@ function parseAforGT(text) {
     const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
     let dateStr = '';
     for (const line of lines) {
+      // Skip WhatsApp message header lines like "[30/03, 22:37] Name:"
+      if (/^\[\d{1,2}\/\d{2},\s*\d{2}:\d{2}\]/.test(line)) continue;
+
       // Format: 26.03.22 1815 → DD/MM/YY
       let m = line.match(/(\d{2})\.(\d{2})\.(\d{2})\s+\d{3,4}/);
       if (m) { dateStr=`${m[3]}/${m[2]}/${m[1]}`; break; }
@@ -697,7 +702,7 @@ function parseAforGT(text) {
         const mo=mos[m[2].toLowerCase().slice(0,3)]; const yr=new Date().getFullYear().toString().slice(2);
         dateStr=`${String(m[1]).padStart(2,'0')}/${mo}/${yr}`; break;
       }
-      // Format: 08/03 → DD/MM (generic — last resort, skip WhatsApp headers [DD/MM, HH:MM])
+      // Format: 08/03 → DD/MM (generic — last resort, skip WhatsApp headers)
       m = line.match(/(?<!\[)\b(\d{2})\/(\d{2})\b(?!\s*,)/);
       if (m) { const yr=new Date().getFullYear().toString().slice(2); dateStr=`${m[1]}/${m[2]}/${yr}`; break; }
     }

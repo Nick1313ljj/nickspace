@@ -236,6 +236,7 @@
         <input type="file" id="fileBAdd" accept=".txt,text/plain" onchange="loadFileToAdd()">
         <button class="hbtn blue" onclick="document.getElementById('fileBAdd').click()">📂 载入</button>
         <button class="hbtn" style="color:var(--accent);border-color:var(--accent)" onclick="promptAddDB()">＋ 添加</button>
+        <button class="hbtn" style="color:var(--blue);border-color:var(--blue)" onclick="pasteToInput('inputBAdd')">📋 粘贴</button>
       </div>
       <div style="margin-top:6px">
         <button class="hbtn" onclick="document.getElementById('inputBAdd').value='';document.getElementById('fileBAdd').value=''">✕ 清空</button>
@@ -251,6 +252,7 @@
     <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">完整单据 或 手动5位号码</span>
     <input type="file" id="fileA" accept=".txt,text/plain" onchange="loadFile('A')">
     <button class="hbtn" style="margin-left:auto;color:var(--blue);border-color:var(--blue)" onclick="document.getElementById('fileA').click()">📂 文件</button>
+    <button class="hbtn" style="color:var(--blue);border-color:var(--blue)" onclick="pasteToInput('inputA')">📋 粘贴</button>
     <button class="hbtn" onclick="clearA()">✕</button>
   </div>
   <textarea class="main-ta" id="inputA" style="width:100%;background:#eff6ff;border:1px solid #93c5fd;color:var(--text);font-family:var(--mono);font-size:12px;line-height:1.65;padding:10px 12px;resize:vertical;outline:none;min-height:80px;transition:border-color .2s;" placeholder="粘贴完整单据（自动提取日期），或每行一个5位号码"></textarea>
@@ -685,17 +687,19 @@ function parseAforGT(text) {
       // Format: 2026-03-29 02:57 → ISO datetime
       m = line.match(/^(\d{4})-(\d{2})-(\d{2})\s+\d{2}:\d{2}/);
       if (m) { dateStr=`${m[3]}/${m[2]}/${m[1].slice(2)}`; break; }
-      // Format: {0322} → MMDD
+      // Format: {0322} → MMDD (S88 — check BEFORE generic DD/MM)
       m = line.match(/\{(\d{2})(\d{2})\}/);
       if (m) { const yr=new Date().getFullYear().toString().slice(2); dateStr=`${m[2]}/${m[1]}/${yr}`; break; }
-      m = line.match(/\b(\d{2})\/(\d{2})\b/);
-      if (m && !dateStr) { const yr=new Date().getFullYear().toString().slice(2); dateStr=`${m[1]}/${m[2]}/${yr}`; break; }
+      // Format: 8Mar, 22Mar etc → DDMon
       m = line.match(/\b(\d{1,2})(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/i);
       if (m) {
         const mos={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
         const mo=mos[m[2].toLowerCase().slice(0,3)]; const yr=new Date().getFullYear().toString().slice(2);
         dateStr=`${String(m[1]).padStart(2,'0')}/${mo}/${yr}`; break;
       }
+      // Format: 08/03 → DD/MM (generic — last resort, skip WhatsApp headers [DD/MM, HH:MM])
+      m = line.match(/(?<!\[)\b(\d{2})\/(\d{2})\b(?!\s*,)/);
+      if (m) { const yr=new Date().getFullYear().toString().slice(2); dateStr=`${m[1]}/${m[2]}/${yr}`; break; }
     }
     let docNo='';
     for (const line of lines) {
@@ -1025,16 +1029,16 @@ function generateImage(noDiscount = false) {
     dataRows.push([r.date, r.rm ? String(r.rm) : '', r.sgd ? String(r.sgd) : '', strike]);
   }
 
-  // Summary rows — RM col and SGD col separate
+  // Summary rows — pure numbers, no prefix, drawn in correct columns by canvas
   const summaryRows = noDiscount ? [
-    { en:'Total', zh:'总数',   rm:String(tRM||''),                    sgd:String(tSGD||''),                    type:'total' },
-    { en:'Stk',   zh:'扣中字', rm:tKZrm?`-${tKZrm.toFixed(2)}`:'-0', sgd:tSGD?(tKZsgd?`-${tKZsgd.toFixed(2)}`:'-0'):'', type:'strike' },
-    { en:'Bal',   zh:'尚欠',   rm:tRM?(tRM-tKZrm).toFixed(2):'',     sgd:tSGD?(tSGD-tKZsgd).toFixed(2):'',   type:'balance' },
+    { en:'Total', zh:'总数',   rm:tRM?String(tRM):'',                  sgd:tSGD?String(tSGD):'',                type:'total' },
+    { en:'Stk',   zh:'扣中字', rm:`-${tKZrm?tKZrm.toFixed(2):0}`,     sgd:tSGD?`-${tKZsgd?tKZsgd.toFixed(2):0}`:'', type:'strike' },
+    { en:'Bal',   zh:'尚欠',   rm:tRM?(tRM-tKZrm).toFixed(2):'',      sgd:tSGD?(tSGD-tKZsgd).toFixed(2):'',   type:'balance' },
   ] : [
-    { en:'Total', zh:'总数',   rm:String(tRM||''),                    sgd:String(tSGD||''),                    type:'total' },
-    { en:'Disc',  zh:'扣',     rm:tRM?`-${discRM}`:'',                sgd:tSGD?`-${discSGD}`:'',               type:'discount' },
-    { en:'Stk',   zh:'扣中字', rm:tKZrm?`-${tKZrm.toFixed(2)}`:'-0', sgd:tSGD?(tKZsgd?`-${tKZsgd.toFixed(2)}`:'-0'):'', type:'strike' },
-    { en:'Bal',   zh:'尚欠',   rm:tRM?balRM.toFixed(2):'',           sgd:tSGD?balSGD.toFixed(2):'',           type:'balance' },
+    { en:'Total', zh:'总数',   rm:tRM?String(tRM):'',                  sgd:tSGD?String(tSGD):'',                type:'total' },
+    { en:'Disc',  zh:'扣',     rm:tRM?`-${discRM}`:'',                 sgd:tSGD?`-${discSGD}`:'',               type:'discount' },
+    { en:'Stk',   zh:'扣中字', rm:`-${tKZrm?tKZrm.toFixed(2):0}`,     sgd:tSGD?`-${tKZsgd?tKZsgd.toFixed(2):0}`:'', type:'strike' },
+    { en:'Bal',   zh:'尚欠',   rm:tRM?balRM.toFixed(2):'',            sgd:tSGD?balSGD.toFixed(2):'',           type:'balance' },
   ];
 
   // Canvas setup
@@ -1170,12 +1174,12 @@ function generateImage(noDiscount = false) {
     ctx.textAlign = 'left';
     ctx.fillText(s.zh, xs[0] + CELL + enW + spaceW, y + LH / 2);
 
-    // RM value — right-aligned in RM column
+    // RM value — right-aligned in RM column (xs[1] to xs[1]+COL[1])
     ctx.font = `bold ${FS}px monospace`;
     ctx.textAlign = 'right';
     if (s.rm) ctx.fillText(s.rm, xs[1] + COL[1] - CELL, y + LH / 2);
 
-    // SGD value — right-aligned in SGD column
+    // SGD value — right-aligned in SGD column (xs[2] to xs[2]+COL[2])
     if (s.sgd) ctx.fillText(s.sgd, xs[2] + COL[2] - CELL, y + LH / 2);
 
     y += LH;
@@ -1369,6 +1373,18 @@ function updateCounterA() {
 function clearA() {
   document.getElementById('inputA').value='';
   document.getElementById('counterA').innerHTML='—';
+}
+
+async function pasteToInput(id) {
+  try {
+    const text = await navigator.clipboard.readText();
+    const el = document.getElementById(id);
+    el.value = text;
+    if (id === 'inputA') updateCounterA();
+    showToast('已粘贴！');
+  } catch(e) {
+    showToast('请直接长按输入框选择粘贴');
+  }
 }
 
 function esc(str) { return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }

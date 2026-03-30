@@ -854,13 +854,18 @@ function buildStrikeMap(matched) {
     // Alibaba charges 5% commission — deduct it to get actual payout
     if (r._grp === 'B') amt = Math.round((amt / 1.05) * 100) / 100;
 
-    const entry=`${amt%1===0?amt:amt.toFixed(2)}(${code||r.docNo})`;
+    const amtStr = amt%1===0 ? String(amt) : amt.toFixed(2);
+    const codeStr = code||r.docNo;
+    // entry format: "200(<b>P3946</b>)" — bold the code inside parens
+    const entry = `${amtStr}(${codeStr})`;
+    const entryHtml = `${amtStr}(<strong style="color:#111;font-weight:900">${codeStr}</strong>)`;
+
     if (/SGD/i.test(r.betType)||/SGD/i.test(r.line)) {
       if (!sgdMap[r.docNo]) sgdMap[r.docNo]=[];
-      sgdMap[r.docNo].push(entry);
+      sgdMap[r.docNo].push({ text: entry, html: entryHtml });
     } else {
       if (!rmMap[r.docNo]) rmMap[r.docNo]=[];
-      rmMap[r.docNo].push(entry);
+      rmMap[r.docNo].push({ text: entry, html: entryHtml });
     }
   }
   return {rmMap,sgdMap};
@@ -886,9 +891,9 @@ function renderOutC(rows) {
   let html='<thead><tr><th style="width:68px">Date</th><th style="width:44px">RM</th><th style="width:44px">SGD</th><th style="min-width:80px">RM Strike 中字</th><th style="min-width:80px">SGD Strike 中字</th></tr></thead><tbody>';
   const sorted=[...rows].sort((a,b)=>a.date.localeCompare(b.date));
   for (const r of sorted) {
-    const rmS=(rmMap[r.docNo]||[]).join('\n');
-    const sgdS=(sgdMap[r.docNo]||[]).join('\n');
-    html+=`<tr><td class="left">${r.date}</td><td>${r.rm||''}</td><td>${r.sgd||''}</td><td style="white-space:pre-line;text-align:left;color:var(--blue)">${esc(rmS)}</td><td style="white-space:pre-line;text-align:left;color:var(--blue)">${esc(sgdS)}</td></tr>`;
+    const rmS=(rmMap[r.docNo]||[]).map(e=>e.html).join('<br>');
+    const sgdS=(sgdMap[r.docNo]||[]).map(e=>e.html).join('<br>');
+    html+=`<tr><td class="left">${r.date}</td><td>${r.rm||''}</td><td>${r.sgd||''}</td><td style="text-align:left">${rmS}</td><td style="text-align:left">${sgdS}</td></tr>`;
   }
 
   html+=`<tr class="sep-row"><td class="left">Total 总数</td><td>${tRM||''}</td><td>${tSGD||''}</td><td></td><td></td></tr>`;
@@ -977,9 +982,10 @@ function generateMatchImage() {
     row.forEach((val, i) => {
       let color = '#374151';
       if (i === 1) color = '#00a87a'; // docNo green
-      if (i === 4) color = '#2563eb'; // amount blue
+      if (i === 4) color = '#111111'; // amount bold dark
+      const isBold = (i === 4);
       ctx.fillStyle = color;
-      ctx.font = `${FS}px monospace`;
+      ctx.font = `${isBold ? 'bold ' : ''}${FS}px monospace`;
       ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
       ctx.fillText(String(val), xs[i] + CELL, y + LH / 2);
     });
@@ -1027,8 +1033,8 @@ function generateImage(noDiscount = false) {
   // Build data rows: [date, rm, sgd, strike]
   const dataRows = [];
   for (const r of sorted) {
-    const rmS  = (rmMap[r.docNo]  || []).join(' / ');
-    const sgdS = (sgdMap[r.docNo] || []).join(' / ');
+    const rmS  = (rmMap[r.docNo]  || []).map(e=>e.text).join(' / ');
+    const sgdS = (sgdMap[r.docNo] || []).map(e=>e.text).join(' / ');
     const strike = [rmS, sgdS].filter(Boolean).join(' | ');
     dataRows.push([r.date, r.rm ? String(r.rm) : '', r.sgd ? String(r.sgd) : '', strike]);
   }
@@ -1142,7 +1148,7 @@ function generateImage(noDiscount = false) {
     cell(r[0], xs[0] + CELL,           y, 'left',  '#374151');
     cell(r[1], xs[1] + COL[1] - CELL,  y, 'right', '#374151');
     cell(r[2], xs[2] + COL[2] - CELL,  y, 'right', '#374151');
-    cell(r[3], xs[3] + CELL,           y, 'left',  '#2563eb');
+    cell(r[3], xs[3] + CELL,           y, 'left',  '#111111', true);
     y += LH;
   }
 
@@ -1314,8 +1320,8 @@ function exportOutC() {
   const wb=XLSX.utils.book_new();
   const data=[['Date','RM','SGD','RM Strike 中字','SGD Strike 中字']];
   for (const r of sorted) {
-    const rmS=(rmMap[r.docNo]||[]).join('\n');
-    const sgdS=(sgdMap[r.docNo]||[]).join('\n');
+    const rmS=(rmMap[r.docNo]||[]).map(e=>e.text).join('\n');
+    const sgdS=(sgdMap[r.docNo]||[]).map(e=>e.text).join('\n');
     data.push([r.date,r.rm||'',r.sgd||'',rmS,sgdS]);
   }
   data.push(['Total 总数', tRM||'', tSGD||'','','']);

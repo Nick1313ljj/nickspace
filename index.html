@@ -703,17 +703,21 @@ function parseAforGT(text) {
       const m=line.match(/\((\d{5})\)/);
       if (m){ docNo=m[1]; break; }
       // 7km18 style: word+digits+(number) at start of line e.g. "7km18(1)"
-      const m2=line.match(/^([A-Za-z0-9]+\(\d+\))/);
+      const m2=line.match(/^([A-Za-z][A-Za-z0-9]*\(\d+\))\s*$/);
       if (m2){ docNo=m2[1]; break; }
+      // S88 style: 990322152231(6) → 03/22(6)
+      const m3=line.match(/^99(\d{2})(\d{2})\d{6}\((\d+)\)/);
+      if (m3){ docNo=`${m3[1]}/${m3[2]}(${m3[3]})`; break; }
     }
     let gtAmt=null, currency='RM';
     for (const line of lines) {
       let m=line.match(/GT[=:](\d+(?:\.\d+)?)/i);
-      if (!m) m=line.match(/T\((\d+(?:\.\d+)?)\)/i);
+      if (!m) m=line.match(/\bT\((\d+(?:\.\d+)?)\)/i);
       if (m) { gtAmt=parseFloat(m[1]); if (/SGD/i.test(line)) currency='SGD'; break; }
     }
+    // Store if we have date and amount — docNo can be empty
     if (dateStr && gtAmt!==null) {
-      rows.push({ date:dateStr, docNo, rm:currency==='RM'?gtAmt:0, sgd:currency==='SGD'?gtAmt:0, currency, kouAmt:0, kouZhongZi:0, owe:0 });
+      rows.push({ date:dateStr, docNo:docNo||'—', rm:currency==='RM'?gtAmt:0, sgd:currency==='SGD'?gtAmt:0, currency, kouAmt:0, kouZhongZi:0, owe:0 });
     }
   }
   return rows;
@@ -757,8 +761,10 @@ function runMatch() {
   for (const g of gtRows) {
     const kz=docAmt[g.docNo]||0;
     g.kouZhongZi=kz;
-    g.kouAmt=Math.floor((g.rm||0)/10);
-    g.owe=(g.rm||0)-g.kouAmt-kz;
+    // Discount applies to both RM and SGD separately
+    g.kouAmt=Math.floor((g.rm||0)/10) + Math.floor((g.sgd||0)/10);
+    g.owe=(g.rm||0)-Math.floor((g.rm||0)/10)-kz;
+    g.oweSGD=(g.sgd||0)-Math.floor((g.sgd||0)/10);
   }
 
   renderMatchTable(matchedRows);
@@ -799,15 +805,21 @@ function renderMatchTable(rows) {
 function renderGT(rows) {
   const tbody=document.getElementById('gtBody'); tbody.innerHTML='';
   if (!rows.length) return;
-  let tRM=0,tSGD=0,tKou=0,tKZ=0,tOwe=0;
+  let tRM=0,tSGD=0,tKou=0,tKZ=0,tOwe=0,tOweSGD=0;
   for (const r of rows) {
-    tRM+=r.rm; tSGD+=r.sgd; tKou+=r.kouAmt; tKZ+=r.kouZhongZi; tOwe+=r.owe;
+    tRM+=r.rm; tSGD+=r.sgd; tKou+=r.kouAmt; tKZ+=r.kouZhongZi;
+    tOwe+=r.owe; tOweSGD+=(r.oweSGD||0);
+    const discR=Math.floor((r.rm||0)/10);
+    const discS=Math.floor((r.sgd||0)/10);
+    const kouDisplay=r.kouAmt||'—';
+    const oweDisplay=r.rm?(r.owe.toFixed(2)):(r.sgd?r.oweSGD.toFixed(2):'—');
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td class="date">${r.date}</td><td class="docno">${r.docNo||'—'}</td><td class="num">${r.rm||'—'}</td><td class="num">${r.sgd||'—'}</td><td class="num" style="color:var(--warn)">${r.kouAmt||'—'}</td><td class="num" style="color:var(--warn)">${r.kouZhongZi?r.kouZhongZi.toFixed(2):'—'}</td><td class="num" style="color:var(--accent)">${r.rm?r.owe.toFixed(2):'—'}</td>`;
+    tr.innerHTML=`<td class="date">${r.date}</td><td class="docno">${r.docNo||'—'}</td><td class="num">${r.rm||'—'}</td><td class="num">${r.sgd||'—'}</td><td class="num" style="color:var(--warn)">${kouDisplay}</td><td class="num" style="color:var(--warn)">${r.kouZhongZi?r.kouZhongZi.toFixed(2):'—'}</td><td class="num" style="color:var(--accent)">${oweDisplay}</td>`;
     tbody.appendChild(tr);
   }
   const tr=document.createElement('tr'); tr.className='gt-total-row';
-  tr.innerHTML=`<td colspan="2">Total</td><td class="num">${tRM||'—'}</td><td class="num">${tSGD||'—'}</td><td class="num">${tKou||'—'}</td><td class="num">${tKZ?tKZ.toFixed(2):'—'}</td><td class="num">${tOwe?tOwe.toFixed(2):'—'}</td>`;
+  const totalOwe = tOwe + tOweSGD;
+  tr.innerHTML=`<td colspan="2">Total</td><td class="num">${tRM||'—'}</td><td class="num">${tSGD||'—'}</td><td class="num">${tKou||'—'}</td><td class="num">${tKZ?tKZ.toFixed(2):'—'}</td><td class="num">${totalOwe?totalOwe.toFixed(2):'—'}</td>`;
   tbody.appendChild(tr);
   document.getElementById('gtCount').textContent=`${rows.length} 张`;
 }
@@ -851,17 +863,19 @@ function buildStrikeMap(matched) {
 function renderOutC(rows) {
   if (!rows.length) return;
   const {rmMap,sgdMap}=buildStrikeMap(matchedRows);
-  const tRM=rows.reduce((s,r)=>s+r.rm,0);
+  const tRM =rows.reduce((s,r)=>s+r.rm,0);
   const tSGD=rows.reduce((s,r)=>s+r.sgd,0);
-  const grand=tRM+tSGD;
-  const disc=Math.floor(grand/10);
-  const tKZ=rows.reduce((s,r)=>s+r.kouZhongZi,0);
-  const bal=grand-disc-tKZ;
+  // Discount only on RM, SGD separate
+  const discRM =Math.floor(tRM/10);
+  const discSGD=Math.floor(tSGD/10);
+  const tKZrm =rows.reduce((s,r)=>s+(r.currency==='SGD'?0:r.kouZhongZi),0);
+  const tKZsgd=rows.reduce((s,r)=>s+(r.currency==='SGD'?r.kouZhongZi:0),0);
+  const balRM =tRM -discRM -tKZrm;
+  const balSGD=tSGD-discSGD-tKZsgd;
 
   const table=document.getElementById('outcTable');
   let html='<thead><tr><th style="width:68px">Date</th><th style="width:44px">RM</th><th style="width:44px">SGD</th><th style="min-width:80px">RM Strike 中字</th><th style="min-width:80px">SGD Strike 中字</th></tr></thead><tbody>';
 
-  // Sort rows by date
   const sorted=[...rows].sort((a,b)=>a.date.localeCompare(b.date));
   for (const r of sorted) {
     const rmS=(rmMap[r.docNo]||[]).join('\n');
@@ -870,9 +884,9 @@ function renderOutC(rows) {
   }
 
   html+=`<tr class="sep-row"><td class="left">Total 总数</td><td>${tRM||''}</td><td>${tSGD||''}</td><td></td><td></td></tr>`;
-  html+=`<tr class="discount-row"><td class="left">Discount 扣</td><td>-${disc}</td><td></td><td></td><td></td></tr>`;
-  html+=`<tr class="strike-row"><td class="left">Strike 扣中字</td><td>-${tKZ?tKZ.toFixed(2):0}</td><td></td><td></td><td></td></tr>`;
-  html+=`<tr class="balance-row"><td class="left">Balance 尚欠</td><td>${bal.toFixed(2)}</td><td></td><td></td><td></td></tr>`;
+  html+=`<tr class="discount-row"><td class="left">Discount 扣</td><td>${tRM?'-'+discRM:''}</td><td>${tSGD?'-'+discSGD:''}</td><td></td><td></td></tr>`;
+  html+=`<tr class="strike-row"><td class="left">Strike 扣中字</td><td>${tKZrm?'-'+tKZrm.toFixed(2):''}</td><td>${tKZsgd?'-'+tKZsgd.toFixed(2):''}</td><td></td><td></td></tr>`;
+  html+=`<tr class="balance-row"><td class="left">Balance 尚欠</td><td>${tRM?balRM.toFixed(2):''}</td><td>${tSGD?balSGD.toFixed(2):''}</td><td></td><td></td></tr>`;
   html+='</tbody>';
   table.innerHTML=html;
 }
@@ -995,10 +1009,12 @@ function generateImage(noDiscount = false) {
   const sorted = [...rows].sort((a, b) => a.date.localeCompare(b.date));
   const tRM  = rows.reduce((s, r) => s + r.rm, 0);
   const tSGD = rows.reduce((s, r) => s + r.sgd, 0);
-  const grand = tRM + tSGD;
-  const disc  = Math.floor(grand / 10);
-  const tKZ   = rows.reduce((s, r) => s + r.kouZhongZi, 0);
-  const bal   = grand - disc - tKZ;
+  const discRM  = Math.floor(tRM  / 10);
+  const discSGD = Math.floor(tSGD / 10);
+  const tKZrm  = rows.reduce((s,r)=>s+(r.currency==='SGD'?0:r.kouZhongZi),0);
+  const tKZsgd = rows.reduce((s,r)=>s+(r.currency==='SGD'?r.kouZhongZi:0),0);
+  const balRM  = tRM  - discRM  - tKZrm;
+  const balSGD = tSGD - discSGD - tKZsgd;
 
   // Build data rows: [date, rm, sgd, strike]
   const dataRows = [];
@@ -1009,17 +1025,24 @@ function generateImage(noDiscount = false) {
     dataRows.push([r.date, r.rm ? String(r.rm) : '', r.sgd ? String(r.sgd) : '', strike]);
   }
 
-  // Summary rows — skip Discount if noDiscount mode
-  const bal2 = noDiscount ? grand - tKZ : bal;
+  // Summary rows — RM and SGD shown separately
+  // Format: val = "RM_val" or "RM_val / SGD_val" if both exist
+  const fmtBoth = (rmV, sgdV) => {
+    const parts = [];
+    if (tRM  && rmV  !== '') parts.push(String(rmV));
+    if (tSGD && sgdV !== '') parts.push(`SGD:${sgdV}`);
+    return parts.join('  ');
+  };
+
   const summaryRows = noDiscount ? [
-    { en: 'Total',  zh: '总数',   val: String(grand || ''), type: 'total' },
-    { en: 'Stk',    zh: '扣中字', val: `-${tKZ ? tKZ.toFixed(2) : 0}`, type: 'strike' },
-    { en: 'Bal',    zh: '尚欠',   val: bal2.toFixed(2),     type: 'balance' },
+    { en: 'Total', zh: '总数',   val: fmtBoth(tRM||'', tSGD||''),                                    type: 'total' },
+    { en: 'Stk',   zh: '扣中字', val: fmtBoth(tKZrm?`-${tKZrm.toFixed(2)}`:'-0', tKZsgd?`-${tKZsgd.toFixed(2)}`:'-0'), type: 'strike' },
+    { en: 'Bal',   zh: '尚欠',   val: fmtBoth(tRM?(tRM-tKZrm).toFixed(2):'', tSGD?(tSGD-tKZsgd).toFixed(2):''), type: 'balance' },
   ] : [
-    { en: 'Total',  zh: '总数',   val: String(grand || ''), type: 'total' },
-    { en: 'Disc',   zh: '扣',     val: `-${disc}`,           type: 'discount' },
-    { en: 'Stk',    zh: '扣中字', val: `-${tKZ ? tKZ.toFixed(2) : 0}`, type: 'strike' },
-    { en: 'Bal',    zh: '尚欠',   val: bal.toFixed(2),       type: 'balance' },
+    { en: 'Total', zh: '总数',   val: fmtBoth(tRM||'', tSGD||''),                                    type: 'total' },
+    { en: 'Disc',  zh: '扣',     val: fmtBoth(tRM?`-${discRM}`:'', tSGD?`-${discSGD}`:''),           type: 'discount' },
+    { en: 'Stk',   zh: '扣中字', val: fmtBoth(tKZrm?`-${tKZrm.toFixed(2)}`:'-0', tKZsgd?`-${tKZsgd.toFixed(2)}`:'-0'), type: 'strike' },
+    { en: 'Bal',   zh: '尚欠',   val: fmtBoth(tRM?balRM.toFixed(2):'', tSGD?balSGD.toFixed(2):''),   type: 'balance' },
   ];
 
   // Canvas setup
@@ -1249,15 +1272,26 @@ function exportMatchExcel() {
 function exportGT() {
   if (!gtRows.length) return;
   const wb=XLSX.utils.book_new();
-  const data=[['Date','单据号','RM','SGD','扣','扣中字','尚欠']];
-  for (const r of gtRows)
-    data.push([r.date,r.docNo,r.rm||'',r.sgd||'',r.kouAmt||'',r.kouZhongZi?+r.kouZhongZi.toFixed(2):'',r.rm?+r.owe.toFixed(2):'']);
-  const tRM=gtRows.reduce((s,r)=>s+r.rm,0),tSGD=gtRows.reduce((s,r)=>s+r.sgd,0);
-  const tKou=gtRows.reduce((s,r)=>s+r.kouAmt,0),tKZ=gtRows.reduce((s,r)=>s+r.kouZhongZi,0);
-  const tOwe=gtRows.reduce((s,r)=>s+r.owe,0);
-  data.push(['Total','',tRM||'',tSGD||'',tKou||'',+tKZ.toFixed(2)||'',+tOwe.toFixed(2)||'']);
+  const data=[['Date','单据号','RM','SGD','扣(RM)','扣(SGD)','扣中字','尚欠(RM)','尚欠(SGD)']];
+  for (const r of gtRows) {
+    const discR=Math.floor((r.rm||0)/10);
+    const discS=Math.floor((r.sgd||0)/10);
+    data.push([r.date,r.docNo,r.rm||'',r.sgd||'',
+      discR||'',discS||'',
+      r.kouZhongZi?+r.kouZhongZi.toFixed(2):'',
+      r.rm?+r.owe.toFixed(2):'',
+      r.sgd?+(r.oweSGD||0).toFixed(2):''
+    ]);
+  }
+  const tRM=gtRows.reduce((s,r)=>s+r.rm,0);
+  const tSGD=gtRows.reduce((s,r)=>s+r.sgd,0);
+  const tDiscR=Math.floor(tRM/10), tDiscS=Math.floor(tSGD/10);
+  const tKZ=gtRows.reduce((s,r)=>s+r.kouZhongZi,0);
+  const tOweR=gtRows.reduce((s,r)=>s+r.owe,0);
+  const tOweS=gtRows.reduce((s,r)=>s+(r.oweSGD||0),0);
+  data.push(['Total','',tRM||'',tSGD||'',tDiscR||'',tDiscS||'',+tKZ.toFixed(2)||'',+tOweR.toFixed(2)||'',+tOweS.toFixed(2)||'']);
   const ws=XLSX.utils.aoa_to_sheet(data);
-  ws['!cols']=[{wch:10},{wch:8},{wch:8},{wch:8},{wch:6},{wch:10},{wch:10}];
+  ws['!cols']=[{wch:10},{wch:8},{wch:8},{wch:8},{wch:7},{wch:7},{wch:10},{wch:10},{wch:10}];
   XLSX.utils.book_append_sheet(wb,ws,'GT汇总');
   XLSX.writeFile(wb,`GT汇总_${new Date().toISOString().slice(0,10)}.xlsx`);
   showToast('GT汇总已导出');
@@ -1267,9 +1301,14 @@ function exportOutC() {
   if (!gtRows.length) return;
   const {rmMap,sgdMap}=buildStrikeMap(matchedRows);
   const sorted=[...gtRows].sort((a,b)=>a.date.localeCompare(b.date));
-  const tRM=gtRows.reduce((s,r)=>s+r.rm,0),tSGD=gtRows.reduce((s,r)=>s+r.sgd,0);
-  const grand=tRM+tSGD, disc=Math.floor(grand/10);
-  const tKZ=gtRows.reduce((s,r)=>s+r.kouZhongZi,0), bal=grand-disc-tKZ;
+  const tRM =gtRows.reduce((s,r)=>s+r.rm,0);
+  const tSGD=gtRows.reduce((s,r)=>s+r.sgd,0);
+  const discRM =Math.floor(tRM/10);
+  const discSGD=Math.floor(tSGD/10);
+  const tKZrm =gtRows.reduce((s,r)=>s+(r.currency==='SGD'?0:r.kouZhongZi),0);
+  const tKZsgd=gtRows.reduce((s,r)=>s+(r.currency==='SGD'?r.kouZhongZi:0),0);
+  const balRM =tRM -discRM -tKZrm;
+  const balSGD=tSGD-discSGD-tKZsgd;
   const wb=XLSX.utils.book_new();
   const data=[['Date','RM','SGD','RM Strike 中字','SGD Strike 中字']];
   for (const r of sorted) {
@@ -1277,10 +1316,10 @@ function exportOutC() {
     const sgdS=(sgdMap[r.docNo]||[]).join('\n');
     data.push([r.date,r.rm||'',r.sgd||'',rmS,sgdS]);
   }
-  data.push(['Total 总数',tRM,tSGD,'','']);
-  data.push(['Discount 扣',-disc,'','','']);
-  data.push(['Strike 扣中字',-(tKZ||0),'','','']);
-  data.push(['Balance 尚欠',+bal.toFixed(2),'','','']);
+  data.push(['Total 总数', tRM||'', tSGD||'','','']);
+  data.push(['Discount 扣', tRM?-discRM:'', tSGD?-discSGD:'','','']);
+  data.push(['Strike 扣中字', tKZrm?-tKZrm:'', tKZsgd?-tKZsgd:'','','']);
+  data.push(['Balance 尚欠', tRM?+balRM.toFixed(2):'', tSGD?+balSGD.toFixed(2):'','','']);
   const ws=XLSX.utils.aoa_to_sheet(data);
   ws['!cols']=[{wch:10},{wch:7},{wch:7},{wch:18},{wch:18}];
   // Yellow balance row

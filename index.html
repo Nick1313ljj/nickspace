@@ -884,7 +884,6 @@ function renderOutC(rows) {
 
   const table=document.getElementById('outcTable');
   let html='<thead><tr><th style="width:68px">Date</th><th style="width:44px">RM</th><th style="width:44px">SGD</th><th style="min-width:80px">RM Strike 中字</th><th style="min-width:80px">SGD Strike 中字</th></tr></thead><tbody>';
-
   const sorted=[...rows].sort((a,b)=>a.date.localeCompare(b.date));
   for (const r of sorted) {
     const rmS=(rmMap[r.docNo]||[]).join('\n');
@@ -1131,7 +1130,7 @@ function generateImage(noDiscount = false) {
   cell('Date', xs[0] + CELL,              y, 'left',  '#4b5563', true);
   cell('RM',   xs[1] + COL[1] - CELL,     y, 'right', '#4b5563', true);
   cell('SGD',  xs[2] + COL[2] - CELL,     y, 'right', '#4b5563', true);
-  cell('Stk',  xs[3] + CELL,              y, 'left',  '#4b5563', true);
+  cell('Stk/Kena', xs[3] + CELL, y, 'left', '#4b5563', true);
   y += LH;
 
   // Separator

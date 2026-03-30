@@ -426,15 +426,50 @@ function refreshUI() {
         const realRecs = recs.filter(r => !r._noWin);
         const noWinRecs = recs.filter(r => r._noWin);
         total += recs.length;
+
+        // Build month tag with expand button
         const tag = document.createElement('span');
         tag.className = `month-tag ali-${grp.toLowerCase()}`;
+        tag.style.cssText = 'flex-direction:column;align-items:flex-start;padding:6px 8px;gap:4px';
         const noWinNote = noWinRecs.length ? ` <span style="font-size:9px;color:var(--muted)">(+${noWinRecs.length}无中奖)</span>` : '';
-        tag.innerHTML = `${keyLabel(k)} <em>${realRecs.length}条</em>${noWinNote} <button class="del-month" onclick="confirmDel('${grp}','${k}')">×</button>`;
+        tag.innerHTML = `
+          <div style="display:flex;align-items:center;gap:6px;width:100%">
+            <span>${keyLabel(k)} <em>${realRecs.length}条</em>${noWinNote}</span>
+            <button class="del-month" title="展开按日管理" onclick="toggleDayList(this,'${grp}','${k}')">▸</button>
+            <button class="del-month" title="删除整月" onclick="confirmDel('${grp}','${k}')" style="margin-left:auto">×</button>
+          </div>
+          <div class="day-list" style="display:none;flex-wrap:wrap;gap:4px;margin-top:2px"></div>`;
         list.appendChild(tag);
       });
     }
     document.getElementById(totalId).textContent = total;
   });
+}
+
+function toggleDayList(btn, grp, monthKey) {
+  const dayList = btn.closest('.month-tag').querySelector('.day-list');
+  if (dayList.style.display === 'flex') {
+    dayList.style.display = 'none';
+    btn.textContent = '▸';
+    return;
+  }
+  // Build day buttons
+  const recs = getData(monthKey);
+  const dateSet = {};
+  for (const r of recs) {
+    if (!r.dateB) continue;
+    if (!dateSet[r.dateB]) dateSet[r.dateB] = 0;
+    dateSet[r.dateB]++;
+  }
+  const color = grp === 'A' ? 'var(--ali-a)' : 'var(--ali-b)';
+  dayList.innerHTML = Object.entries(dateSet).sort().map(([d, cnt]) => {
+    const day = parseInt(d.slice(8));
+    return `<button onclick="confirmDelDay('${grp}','${monthKey}','${d}')"
+      style="font-family:var(--mono);font-size:10px;padding:2px 7px;border:1px solid ${color};color:${color};background:transparent;cursor:pointer;border-radius:2px">
+      ${day}日(${cnt}) ×</button>`;
+  }).join('');
+  dayList.style.display = 'flex';
+  btn.textContent = '▾';
 }
 
 // ════════════════════════════════════════════════════════
@@ -464,6 +499,41 @@ function doAdd(grp) {
     if (!groups[k]) groups[k] = [];
     groups[k].push(r);
   }
+
+  // Check for dates that already exist in the OTHER group
+  const otherGrp = grp === 'A' ? 'B' : 'A';
+  const otherKeys = getKeys(otherGrp);
+  const otherDates = new Set();
+  for (const k of otherKeys) getData(k).forEach(r => r.dateB && otherDates.add(r.dateB));
+
+  const newDates = new Set(Object.values(groups).flat().map(r => r.dateB).filter(Boolean));
+  const conflicts = [...newDates].filter(d => otherDates.has(d));
+
+  if (conflicts.length) {
+    const otherName = otherGrp === 'A' ? 'Aliapos' : 'Alibaba';
+    const targetName = grp === 'A' ? 'Aliapos' : 'Alibaba';
+    const days = conflicts.map(d => d.slice(5)).join('、');
+    document.getElementById('delTitle').textContent = `⚠️ 发现重复日期`;
+    document.getElementById('delMsg').textContent = `以下日期在 ${otherName} 已有资料：\n${days}\n\n确定还是要添加到 ${targetName}？`;
+    document.getElementById('delConfirm').textContent = '确定添加';
+    document.getElementById('delConfirm').onclick = () => {
+      closeDialogDel();
+      document.getElementById('delConfirm').textContent = '删除';
+      _doActualAdd(grp, groups, noDate);
+    };
+    // Cancel button resets
+    document.querySelector('#overlayDel .dialog-btns button:first-child').onclick = () => {
+      closeDialogDel();
+      document.getElementById('delConfirm').textContent = '删除';
+    };
+    document.getElementById('overlayDel').classList.add('show');
+    return;
+  }
+
+  _doActualAdd(grp, groups, noDate);
+}
+
+function _doActualAdd(grp, groups, noDate) {
   let added = 0, skipped = 0;
   for (const [k, rs] of Object.entries(groups)) {
     const existing = getData(k);
@@ -500,6 +570,21 @@ function confirmDel(grp, key) {
   document.getElementById('delTitle').textContent = `删除 ${keyLabel(key)} (${grp==='A'?'Aliapos':'Alibaba'})`;
   document.getElementById('delMsg').textContent = `确定删除全部 ${recs.length} 条记录？\n此操作无法复原。`;
   document.getElementById('delConfirm').onclick = () => { delData(_delKey); closeDialogDel(); refreshUI(); showToast('已删除'); };
+  document.getElementById('overlayDel').classList.add('show');
+}
+
+function confirmDelDay(grp, monthKey, dateStr) {
+  const recs = getData(monthKey);
+  const toKeep = recs.filter(r => r.dateB !== dateStr);
+  const toDelCount = recs.length - toKeep.length;
+  const day = parseInt(dateStr.slice(8));
+  document.getElementById('delTitle').textContent = `删除 ${day}日 (${grp==='A'?'Aliapos':'Alibaba'})`;
+  document.getElementById('delMsg').textContent = `确定删除 ${dateStr} 的 ${toDelCount} 条记录？\n此操作无法复原。`;
+  document.getElementById('delConfirm').onclick = () => {
+    if (toKeep.length) saveData(monthKey, toKeep);
+    else delData(monthKey);
+    closeDialogDel(); refreshUI(); showToast(`已删除 ${dateStr} 的资料`);
+  };
   document.getElementById('overlayDel').classList.add('show');
 }
 

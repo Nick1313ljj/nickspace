@@ -650,7 +650,8 @@ function parseA(text) {
     /\d{2}\.\d{2}\.\d{2}\s+\d{3,4}/.test(l) ||  // 26.03.22 1815
     /^\d{6}\s+\d{3,4}/.test(l) ||                 // 260322 1815
     /^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/.test(l) || // 2026-03-29 02:57
-    /\{(\d{4})\}/.test(l)                          // {0322}
+    /\{(\d{4})\}/.test(l) ||                       // {0322} S88
+    /^\[S88\]/.test(l.trim())                       // [S88]
   );
   const map = new Map();
 
@@ -686,21 +687,32 @@ function parseA(text) {
     m = line.match(/^\[(\d{1,2})\/(\d{1,2}),/);
     if (m && !cur) { const yr=new Date().getFullYear(); cur=`${yr}-${String(m[1]).padStart(2,'0')}-${String(m[2]).padStart(2,'0')}`; }
 
-    // Strip WhatsApp header prefix before processing
-    const cleanLine = line.replace(/^\[\d{1,2}\/\d{2},\s*\d{2}:\d{2}\]\s*[^:]*:\s*/, '');
+    // S88 style: 990314182429(5) → stored as 03/14(5)
+    const m3 = line.match(/^99(\d{2})(\d{2})\d{6}\((\d+)\)/);
+    if (m3) {
+      const s88key = `${m3[1]}/${m3[2]}(${m3[3]})`;
+      if (!map.has(s88key)) map.set(s88key, cur||'(未识别)');
+    }
 
-    // New format: "260330 1908 (8)" or "260328 2001 (43)"
-    // DocNo = digits inside last parens of first line, last 5 digits, zero-padded
+    // New format: "260330 1908 (8)" → docNo = bracket digits last 5, zero-padded
+    const cleanLine = line.replace(/^\[\d{1,2}\/\d{1,2},\s*\d{1,2}:\d{2}(?:\s*[AP]M)?\]\s*[^:]+:\s*/, '');
     if (/^\d{6}\s+\d{4}\s+\(\d+\)/.test(cleanLine)) {
-      const m = cleanLine.match(/\((\d+)\)\s*$/);
-      if (m) {
-        const docNo = m[1].slice(-5).padStart(5,'0');
+      const mn = cleanLine.match(/\((\d+)\)\s*$/);
+      if (mn) {
+        const docNo = mn[1].slice(-5).padStart(5,'0');
         if (!map.has(docNo)) map.set(docNo, cur||'(未识别)');
       }
     }
 
     for (const dm of line.matchAll(/\((\d{5})\)/g))
       if (!map.has(dm[1])) map.set(dm[1], cur||'(未识别)');
+
+    // S88 style: 990314182429(5) → key "03/14(5)" mapped to cur date
+    const s88m = line.match(/^99(\d{2})(\d{2})\d{6}\((\d+)\)/);
+    if (s88m) {
+      const s88key = `${s88m[1]}/${s88m[2]}(${s88m[3]})`;
+      if (!map.has(s88key)) map.set(s88key, cur||'(未识别)');
+    }
   }
   return { mode:'receipt', map };
 }
@@ -763,7 +775,7 @@ function splitBlocks(text) {
   for (const line of lines) {
     const t = line.trim();
     // Strip WhatsApp header prefix if present: "[30/03, 22:37] Name: content"
-    const stripped = t.replace(/^\[\d{1,2}\/\d{2},\s*\d{2}:\d{2}\]\s*[^:]*:\s*/, '');
+    const stripped = t.replace(/^\[\d{1,2}\/\d{1,2},\s*\d{1,2}:\d{2}(?:\s*[AP]M)?\]\s*[^:]+:\s*/, '');
     const isStart =
       /\d{2}\.\d{2}\.\d{2}\s+\d{3,4}/.test(stripped) ||   // 26.03.22 1815
       /^\d{6}\s+\d{4}\s+\(\d+\)/.test(stripped) ||          // 260330 1908 (8) NEW
@@ -783,8 +795,8 @@ function parseAforGT(text) {
     const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
     let dateStr = '';
     for (const line of lines) {
-      // Skip WhatsApp message header lines like "[30/03, 22:37] Name:"
-      if (/^\[\d{1,2}\/\d{2},\s*\d{2}:\d{2}\]/.test(line)) continue;
+      // Skip WhatsApp message header lines like "[3/14, 6:24 PM] Name:" (1-digit hour, AM/PM)
+      if (/^\[\d{1,2}\/\d{1,2},\s*\d{1,2}:\d{2}(?:\s*[AP]M)?\]/.test(line)) continue;
 
       // Format: 26.03.22 1815 → DD/MM/YY
       let m = line.match(/(\d{2})\.(\d{2})\.(\d{2})\s+\d{3,4}/);
@@ -812,7 +824,7 @@ function parseAforGT(text) {
     let docNo='';
     for (const line of lines) {
       // Strip WhatsApp header
-      const cl = line.replace(/^\[\d{1,2}\/\d{2},\s*\d{2}:\d{2}\]\s*[^:]*:\s*/, '');
+      const cl = line.replace(/^\[\d{1,2}\/\d{1,2},\s*\d{1,2}:\d{2}(?:\s*[AP]M)?\]\s*[^:]+:\s*/, '');
       // New format: "260330 1908 (8)" → bracket digits last 5, zero-padded
       if (/^\d{6}\s+\d{4}\s+\(\d+\)/.test(cl)) {
         const m = cl.match(/\((\d+)\)\s*$/);

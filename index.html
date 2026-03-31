@@ -832,8 +832,8 @@ function parseAforGT(text) {
     let gtAmt=null, currency='RM';
     // New format rule: if both SGD and MYR GT exist, pick SGD
     const gtLines = lines.filter(l => /GT[=:]/i.test(l));
-    const sgdGT = gtLines.find(l => /SGD/i.test(l));
-    const myrGT = gtLines.find(l => /MYR/i.test(l) || (!/SGD/i.test(l) && /GT[=:]/i.test(l)));
+    const sgdGT = gtLines.find(l => /S[GD]{2}/i.test(l) && /GT[=:]/i.test(l));
+    const myrGT = gtLines.find(l => /MYR/i.test(l) || (!(/S[GD]{2}/i.test(l)) && /GT[=:]/i.test(l)));
     if (sgdGT) {
       const m = sgdGT.match(/GT[=:]([\d.]+)/i);
       if (m) { gtAmt=parseFloat(m[1]); currency='SGD'; }
@@ -844,7 +844,7 @@ function parseAforGT(text) {
       for (const line of lines) {
         let m=line.match(/GT[=:](\d+(?:\.\d+)?)/i);
         if (!m) m=line.match(/\bT\((\d+(?:\.\d+)?)\)/i);
-        if (m) { gtAmt=parseFloat(m[1]); if (/SGD/i.test(line)) currency='SGD'; break; }
+        if (m) { gtAmt=parseFloat(m[1]); if (/S[GD]{2}/i.test(line)) currency='SGD'; break; }
       }
     }
     // Store if we have date and amount — docNo can be empty

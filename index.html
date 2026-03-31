@@ -295,7 +295,11 @@
 <div class="wa-preview" id="waSection" style="display:none">
   <div class="wa-preview-header">
     <span class="wa-label">📱 WhatsApp 格式预览</span>
-    <button class="btn-copy" onclick="copyWA()">复制</button>
+    <div style="display:flex;gap:5px;flex-wrap:wrap">
+      <button class="btn-copy" onclick="copyWA()">复制</button>
+      <button class="btn-copy" style="border-color:#0ea5e9;color:#0ea5e9" onclick="shareWA(false)">📤 发送1<br><span style="font-size:9px;opacity:0.7">含折扣</span></button>
+      <button class="btn-copy" style="border-color:#f59e0b;color:#92400e;background:#fef3c7" onclick="shareWA(true)">📤 发送2<br><span style="font-size:9px;opacity:0.7">无折扣</span></button>
+    </div>
   </div>
   <div class="wa-text" id="waText"></div>
 </div>
@@ -682,6 +686,19 @@ function parseA(text) {
     m = line.match(/^\[(\d{1,2})\/(\d{1,2}),/);
     if (m && !cur) { const yr=new Date().getFullYear(); cur=`${yr}-${String(m[1]).padStart(2,'0')}-${String(m[2]).padStart(2,'0')}`; }
 
+    // Strip WhatsApp header prefix before processing
+    const cleanLine = line.replace(/^\[\d{1,2}\/\d{2},\s*\d{2}:\d{2}\]\s*[^:]*:\s*/, '');
+
+    // New format: "260330 1908 (8)" or "260328 2001 (43)"
+    // DocNo = digits inside last parens of first line, last 5 digits, zero-padded
+    if (/^\d{6}\s+\d{4}\s+\(\d+\)/.test(cleanLine)) {
+      const m = cleanLine.match(/\((\d+)\)\s*$/);
+      if (m) {
+        const docNo = m[1].slice(-5).padStart(5,'0');
+        if (!map.has(docNo)) map.set(docNo, cur||'(未识别)');
+      }
+    }
+
     for (const dm of line.matchAll(/\((\d{5})\)/g))
       if (!map.has(dm[1])) map.set(dm[1], cur||'(未识别)');
   }
@@ -748,10 +765,11 @@ function splitBlocks(text) {
     // Strip WhatsApp header prefix if present: "[30/03, 22:37] Name: content"
     const stripped = t.replace(/^\[\d{1,2}\/\d{2},\s*\d{2}:\d{2}\]\s*[^:]*:\s*/, '');
     const isStart =
-      /\d{2}\.\d{2}\.\d{2}\s+\d{3,4}/.test(stripped) ||  // 26.03.22 1815
-      /^\d{6}\s+\d{3,4}/.test(stripped) ||                 // 260322 1815
-      /^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/.test(stripped) || // 2026-03-29 02:57
-      /^\[S88\]/.test(stripped);                            // [S88]
+      /\d{2}\.\d{2}\.\d{2}\s+\d{3,4}/.test(stripped) ||   // 26.03.22 1815
+      /^\d{6}\s+\d{4}\s+\(\d+\)/.test(stripped) ||          // 260330 1908 (8) NEW
+      /^\d{6}\s+\d{3,4}(?!\s*\()/.test(stripped) ||          // 260322 1815
+      /^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/.test(stripped) ||  // 2026-03-29 02:57
+      /^\[S88\]/.test(stripped);                              // [S88]
     if (isStart && cur.length) { blocks.push(cur.join('\n')); cur = []; }
     cur.push(line);
   }
@@ -793,21 +811,41 @@ function parseAforGT(text) {
     }
     let docNo='';
     for (const line of lines) {
+      // Strip WhatsApp header
+      const cl = line.replace(/^\[\d{1,2}\/\d{2},\s*\d{2}:\d{2}\]\s*[^:]*:\s*/, '');
+      // New format: "260330 1908 (8)" → bracket digits last 5, zero-padded
+      if (/^\d{6}\s+\d{4}\s+\(\d+\)/.test(cl)) {
+        const m = cl.match(/\((\d+)\)\s*$/);
+        if (m) { docNo = m[1].slice(-5).padStart(5,'0'); break; }
+      }
       // Standard 5-digit in parens: (90235)
-      const m=line.match(/\((\d{5})\)/);
+      const m=cl.match(/\((\d{5})\)/);
       if (m){ docNo=m[1]; break; }
-      // 7km18 style: word+digits+(number) at start of line e.g. "7km18(1)"
-      const m2=line.match(/^([A-Za-z][A-Za-z0-9]*\(\d+\))\s*$/);
+      // 7km18 style
+      const m2=cl.match(/^([A-Za-z][A-Za-z0-9]*\(\d+\))\s*$/);
       if (m2){ docNo=m2[1]; break; }
       // S88 style: 990322152231(6) → 03/22(6)
-      const m3=line.match(/^99(\d{2})(\d{2})\d{6}\((\d+)\)/);
+      const m3=cl.match(/^99(\d{2})(\d{2})\d{6}\((\d+)\)/);
       if (m3){ docNo=`${m3[1]}/${m3[2]}(${m3[3]})`; break; }
     }
+
     let gtAmt=null, currency='RM';
-    for (const line of lines) {
-      let m=line.match(/GT[=:](\d+(?:\.\d+)?)/i);
-      if (!m) m=line.match(/\bT\((\d+(?:\.\d+)?)\)/i);
-      if (m) { gtAmt=parseFloat(m[1]); if (/SGD/i.test(line)) currency='SGD'; break; }
+    // New format rule: if both SGD and MYR GT exist, pick SGD
+    const gtLines = lines.filter(l => /GT[=:]/i.test(l));
+    const sgdGT = gtLines.find(l => /SGD/i.test(l));
+    const myrGT = gtLines.find(l => /MYR/i.test(l) || (!/SGD/i.test(l) && /GT[=:]/i.test(l)));
+    if (sgdGT) {
+      const m = sgdGT.match(/GT[=:]([\d.]+)/i);
+      if (m) { gtAmt=parseFloat(m[1]); currency='SGD'; }
+    } else if (myrGT) {
+      const m = myrGT.match(/GT[=:]([\d.]+)/i);
+      if (m) { gtAmt=parseFloat(m[1]); currency='RM'; }
+    } else {
+      for (const line of lines) {
+        let m=line.match(/GT[=:](\d+(?:\.\d+)?)/i);
+        if (!m) m=line.match(/\bT\((\d+(?:\.\d+)?)\)/i);
+        if (m) { gtAmt=parseFloat(m[1]); if (/SGD/i.test(line)) currency='SGD'; break; }
+      }
     }
     // Store if we have date and amount — docNo can be empty
     if (dateStr && gtAmt!==null) {
@@ -1327,27 +1365,49 @@ function downloadImage() {
 // ════════════════════════════════════════════════════════
 // WA preview
 // ════════════════════════════════════════════════════════
-function renderWA(rows) {
+function buildWAText(rows, noDiscount) {
   const sorted=[...rows].sort((a,b)=>a.date.localeCompare(b.date));
   const tRM=rows.reduce((s,r)=>s+r.rm,0);
   const tSGD=rows.reduce((s,r)=>s+r.sgd,0);
+  const discRM=Math.floor(tRM/10);
+  const discSGD=Math.floor(tSGD/10);
+  const tKZrm=rows.reduce((s,r)=>s+(r.currency==='SGD'?0:r.kouZhongZi),0);
+  const tKZsgd=rows.reduce((s,r)=>s+(r.currency==='SGD'?r.kouZhongZi:0),0);
+  const balRM=tRM-(noDiscount?0:discRM)-tKZrm;
+  const balSGD=tSGD-(noDiscount?0:discSGD)-tKZsgd;
+
+  const hasSGD=tSGD>0;
   const pad=(s,n)=>String(s).padEnd(n);
   const padL=(s,n)=>String(s).padStart(n);
-  const C1=10,C2=8;
+  const C1=10,C2=8,C3=6;
   const lines=[];
-  lines.push(pad('Date',C1)+pad('RM',C2)+(tSGD?'SGD':''));
-  lines.push('─'.repeat(C1+C2+(tSGD?6:0)));
-  for (const r of sorted) {
-    lines.push(pad(r.date,C1)+padL(r.rm||'',C2-2).padEnd(C2)+(tSGD?padL(r.sgd||'',6):''));
-  }
-  lines.push('─'.repeat(C1+C2+(tSGD?6:0)));
-  lines.push(pad('Total',C1)+padL(tRM,C2)+(tSGD?padL(tSGD,6):''));
-  document.getElementById('waText').textContent=lines.join('\n');
+
+  lines.push(pad('Date',C1)+pad('RM',C2)+(hasSGD?'SGD':''));
+  lines.push('─'.repeat(C1+C2+(hasSGD?C3:0)));
+  for (const r of sorted)
+    lines.push(pad(r.date,C1)+padL(r.rm||'',C2-2).padEnd(C2)+(hasSGD?padL(r.sgd||'',C3):''));
+  lines.push('─'.repeat(C1+C2+(hasSGD?C3:0)));
+  lines.push(pad('Total',C1)+padL(tRM,C2)+(hasSGD?padL(tSGD,C3):''));
+  if (!noDiscount)
+    lines.push(pad('Disc',C1)+padL('-'+discRM,C2)+(hasSGD?padL('-'+discSGD,C3):''));
+  lines.push(pad('Bal',C1)+padL(balRM.toFixed(2),C2)+(hasSGD?padL(balSGD.toFixed(2),C3):''));
+  return lines.join('\n');
+}
+
+function renderWA(rows) {
+  document.getElementById('waText').textContent = buildWAText(rows, false);
 }
 
 function copyWA() {
-  const t=document.getElementById('waText').textContent;
-  doClip(t, '已复制 WhatsApp 格式');
+  doClip(document.getElementById('waText').textContent, '已复制 WhatsApp 格式');
+}
+
+async function shareWA(noDiscount) {
+  const text = buildWAText(gtRows, noDiscount);
+  if (navigator.share) {
+    try { await navigator.share({ text }); return; } catch(e) {}
+  }
+  doClip(text, noDiscount ? '已复制（无折扣版）' : '已复制（含折扣版）');
 }
 
 // ════════════════════════════════════════════════════════

@@ -829,11 +829,10 @@ function parseAforGT(text) {
       if (m3){ docNo=`${m3[1]}/${m3[2]}(${m3[3]})`; break; }
     }
 
-    let gtAmt=null, currency='RM';
-    // New format rule: if both SGD and MYR GT exist, pick SGD
+    let gtAmt=null, currency='RM'; // Default always RM unless explicitly stated
     const gtLines = lines.filter(l => /GT[=:]/i.test(l));
     const sgdGT = gtLines.find(l => /S[GD]{2}/i.test(l) && /GT[=:]/i.test(l));
-    const myrGT = gtLines.find(l => /MYR/i.test(l) || (!(/S[GD]{2}/i.test(l)) && /GT[=:]/i.test(l)));
+    const myrGT = gtLines.find(l => /MYR/i.test(l));
     if (sgdGT) {
       const m = sgdGT.match(/GT[=:]([\d.]+)/i);
       if (m) { gtAmt=parseFloat(m[1]); currency='SGD'; }
@@ -844,12 +843,16 @@ function parseAforGT(text) {
       for (const line of lines) {
         let m=line.match(/GT[=:](\d+(?:\.\d+)?)/i);
         if (!m) m=line.match(/\bT\((\d+(?:\.\d+)?)\)/i);
-        if (m) { gtAmt=parseFloat(m[1]); if (/S[GD]{2}/i.test(line)) currency='SGD'; break; }
+        if (m) {
+          gtAmt=parseFloat(m[1]);
+          if (/S[GD]{2}/i.test(line)) currency='SGD';
+          break;
+        }
       }
     }
-    // Store if we have date and amount — docNo can be empty
-    if (dateStr && gtAmt!==null) {
-      rows.push({ date:dateStr, docNo:docNo||'—', rm:currency==='RM'?gtAmt:0, sgd:currency==='SGD'?gtAmt:0, currency, kouAmt:0, kouZhongZi:0, owe:0 });
+    // Store if we have amount — even if date is missing use placeholder
+    if (gtAmt!==null) {
+      rows.push({ date:dateStr||'??/??/??', docNo:docNo||'—', rm:currency==='RM'?gtAmt:0, sgd:currency==='SGD'?gtAmt:0, currency, kouAmt:0, kouZhongZi:0, owe:0 });
     }
   }
   return rows;

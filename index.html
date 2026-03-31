@@ -1386,10 +1386,8 @@ function buildWAText(rows, noDiscount) {
   const tSGD=rows.reduce((s,r)=>s+r.sgd,0);
   const discRM=Math.floor(tRM/10);
   const discSGD=Math.floor(tSGD/10);
-  const tKZrm=rows.reduce((s,r)=>s+(r.currency==='SGD'?0:r.kouZhongZi),0);
-  const tKZsgd=rows.reduce((s,r)=>s+(r.currency==='SGD'?r.kouZhongZi:0),0);
-  const balRM=tRM-(noDiscount?0:discRM)-tKZrm;
-  const balSGD=tSGD-(noDiscount?0:discSGD)-tKZsgd;
+  const balRM=tRM-discRM;
+  const balSGD=tSGD-discSGD;
 
   const hasSGD=tSGD>0;
   const pad=(s,n)=>String(s).padEnd(n);
@@ -1403,9 +1401,10 @@ function buildWAText(rows, noDiscount) {
     lines.push(pad(r.date,C1)+padL(r.rm||'',C2-2).padEnd(C2)+(hasSGD?padL(r.sgd||'',C3):''));
   lines.push('─'.repeat(C1+C2+(hasSGD?C3:0)));
   lines.push(pad('Total',C1)+padL(tRM,C2)+(hasSGD?padL(tSGD,C3):''));
-  if (!noDiscount)
+  if (!noDiscount) {
     lines.push(pad('Disc',C1)+padL('-'+discRM,C2)+(hasSGD?padL('-'+discSGD,C3):''));
-  lines.push(pad('Bal',C1)+padL(balRM.toFixed(2),C2)+(hasSGD?padL(balSGD.toFixed(2),C3):''));
+    lines.push(pad('Bal',C1)+padL(balRM,C2)+(hasSGD?padL(balSGD,C3):''));
+  }
   return lines.join('\n');
 }
 

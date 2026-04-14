@@ -213,6 +213,9 @@
     <button class="hbtn" style="margin-left:auto;color:var(--accent);border-color:var(--accent)" onclick="toggleDateCheck()">📅 检查日期</button>
   </div>
 
+  <button class="hbtn" id="dbToggleBtn" onclick="toggleDBContent()" style="margin-top:4px;margin-bottom:4px;font-size:10px">▾ 收起资料库</button>
+
+  <div id="dbContent">
   <!-- Month display: two groups -->
   <div class="month-section">
     <div class="month-section-label" style="color:var(--ali-a)">▸ ALIAPOS</div>
@@ -243,6 +246,7 @@
       </div>
     </div>
   </div>
+  </div><!-- end dbContent -->
 </div>
 
 <!-- ══ A 组 ══ -->
@@ -370,6 +374,31 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// ════════════════════════════════════════════════════════
+// DATE SORT HELPER — converts DD/MM/YY to YYYYMMDD for correct sorting
+// ════════════════════════════════════════════════════════
+function dateToSortKey(d) {
+  if (!d || !d.includes('/')) return d || '';
+  const parts = d.split('/');
+  if (parts.length === 3) return `20${parts[2]}${parts[1]}${parts[0]}`;
+  return d;
+}
+
+// ════════════════════════════════════════════════════════
+// DB CONTENT TOGGLE
+// ════════════════════════════════════════════════════════
+function toggleDBContent() {
+  const el = document.getElementById('dbContent');
+  const btn = document.getElementById('dbToggleBtn');
+  if (el.style.display === 'none') {
+    el.style.display = '';
+    btn.textContent = '▾ 收起资料库';
+  } else {
+    el.style.display = 'none';
+    btn.textContent = '▸ 展开资料库';
+  }
+}
+
 // ════════════════════════════════════════════════════════
 // STORAGE — two prefixes
 // ════════════════════════════════════════════════════════
@@ -1031,7 +1060,7 @@ function renderOutC(rows) {
 
   const table=document.getElementById('outcTable');
   let html='<thead><tr><th style="width:68px">Date</th><th style="width:44px">RM</th><th style="width:44px">SGD</th><th style="min-width:80px">RM Strike 中字</th><th style="min-width:80px">SGD Strike 中字</th></tr></thead><tbody>';
-  const sorted=[...rows].sort((a,b)=>a.date.localeCompare(b.date));
+  const sorted=[...rows].sort((a,b)=>dateToSortKey(a.date).localeCompare(dateToSortKey(b.date)));
   for (const r of sorted) {
     const rmS=(rmMap[r.docNo]||[]).map(e=>e.html).join('<br>');
     const sgdS=(sgdMap[r.docNo]||[]).map(e=>e.html).join('<br>');
@@ -1066,7 +1095,7 @@ function generateMatchImage() {
     let amt = parseFloat(r.amount) || 0;
     if (r._grp === 'B' && amt) amt = Math.round((amt / 1.05) * 100) / 100;
     return [
-      r.dateA, r.docNo, r.line, r.betType,
+      r.dateA, r.docNo, r.line.replace(/\s*\(\d{5}\)\s*/g, ' ').trim(), r.betType,
       amt ? (amt % 1 === 0 ? String(amt) : amt.toFixed(2)) : '—'
     ];
   });
@@ -1381,7 +1410,7 @@ function downloadImage() {
 // WA preview
 // ════════════════════════════════════════════════════════
 function buildWAText(rows, noDiscount) {
-  const sorted=[...rows].sort((a,b)=>a.date.localeCompare(b.date));
+  const sorted=[...rows].sort((a,b)=>dateToSortKey(a.date).localeCompare(dateToSortKey(b.date)));
   const tRM=rows.reduce((s,r)=>s+r.rm,0);
   const tSGD=rows.reduce((s,r)=>s+r.sgd,0);
   const discRM=Math.floor(tRM/10);

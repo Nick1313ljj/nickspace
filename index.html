@@ -448,25 +448,63 @@ function importAllData(input) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = (e) => {
+    let raw = e.target.result;
+    // 去除 BOM 和首尾空白
+    raw = raw.replace(/^\uFEFF/, '').trim();
+
+    let backup;
     try {
-      const backup = JSON.parse(e.target.result);
-      let count = 0;
-      for (let k in backup) {
-        if (k.startsWith(PRE.A) || k.startsWith(PRE.B)) {
-          const existing = getData(k);
-          const imported = backup[k];
-          // 合并：以单据号为 key 去重
-          const map = {};
-          for (let r of existing) map[r[0]] = r;
-          for (let r of imported) map[r[0]] = r;
-          saveData(k, Object.values(map));
-          count++;
-        }
-      }
-      renderDB();
-      alert(`✓ 已导入 ${count} 个月的数据`);
+      backup = JSON.parse(raw);
     } catch (err) {
+      alert('❌ 导入失败：无法解析 JSON 文件\n请确认文件未损坏');
+      input.value = '';
+      return;
+    }
+
+    // 支持两种格式：
+    // 格式1（标准）: { "ali_a_2026-04": [...], ... }
+    // 格式2（旧版）: 直接是数组 [...]
+    let count = 0;
+
+    if (Array.isArray(backup)) {
+      // 旧版格式，直接报错提示
+      alert('❌ 文件格式不符，请重新从旧手机导出');
+      input.value = '';
+      return;
+    }
+
+    if (typeof backup !== 'object') {
       alert('❌ 导入失败：文件格式不正确');
+      input.value = '';
+      return;
+    }
+
+    for (let k in backup) {
+      if (k.startsWith(PRE.A) || k.startsWith(PRE.B)) {
+        const imported = backup[k];
+        if (!Array.isArray(imported)) continue;
+
+        const existing = getData(k);
+        // 合并去重：以第一个字段（单据号）为 key
+        const map = {};
+        for (let r of existing) {
+          const key = Array.isArray(r) ? r[0] : JSON.stringify(r);
+          map[key] = r;
+        }
+        for (let r of imported) {
+          const key = Array.isArray(r) ? r[0] : JSON.stringify(r);
+          map[key] = r;
+        }
+        saveData(k, Object.values(map));
+        count++;
+      }
+    }
+
+    if (count === 0) {
+      alert('⚠️ 文件中没有找到有效数据（需要 ali_a_ 或 ali_b_ 开头的键）');
+    } else {
+      renderDB();
+      alert(`✓ 已成功导入 ${count} 个月的数据`);
     }
     input.value = '';
   };

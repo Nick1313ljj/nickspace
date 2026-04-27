@@ -211,6 +211,8 @@
       Alibaba <em id="totalB" style="color:var(--ali-b);font-style:normal;font-weight:600">0</em>条
     </span>
     <button class="hbtn" style="margin-left:auto;color:var(--accent);border-color:var(--accent)" onclick="toggleDateCheck()">📅 检查日期</button>
+    <button class="hbtn" style="color:var(--blue);border-color:var(--blue)" onclick="exportAllData()">⬇ 导出</button>
+    <label class="hbtn" style="color:var(--blue);border-color:var(--blue);cursor:pointer">⬆ 导入<input type="file" accept=".json" style="display:none" onchange="importAllData(this)"></label>
   </div>
 
   <button class="hbtn" id="dbToggleBtn" onclick="toggleDBContent()" style="margin-top:4px;margin-bottom:4px;font-size:10px">▸ 展开资料库</button>
@@ -420,6 +422,56 @@ function getData(key) {
 
 function saveData(key, recs) { localStorage.setItem(key, JSON.stringify(recs)); }
 function delData(key) { localStorage.removeItem(key); }
+
+// 导出所有数据为 JSON 文件
+function exportAllData() {
+  const backup = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && (k.startsWith(PRE.A) || k.startsWith(PRE.B))) {
+      backup[k] = JSON.parse(localStorage.getItem(k));
+    }
+  }
+  if (Object.keys(backup).length === 0) { alert('资料库为空，无需导出'); return; }
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `nickspace_backup_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// 导入 JSON 文件到资料库
+function importAllData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const backup = JSON.parse(e.target.result);
+      let count = 0;
+      for (let k in backup) {
+        if (k.startsWith(PRE.A) || k.startsWith(PRE.B)) {
+          const existing = getData(k);
+          const imported = backup[k];
+          // 合并：以单据号为 key 去重
+          const map = {};
+          for (let r of existing) map[r[0]] = r;
+          for (let r of imported) map[r[0]] = r;
+          saveData(k, Object.values(map));
+          count++;
+        }
+      }
+      renderDB();
+      alert(`✓ 已导入 ${count} 个月的数据`);
+    } catch (err) {
+      alert('❌ 导入失败：文件格式不正确');
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
 
 function mkKey(grp, dateStr) {
   if (!dateStr) return null;

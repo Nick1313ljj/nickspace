@@ -1245,9 +1245,10 @@ function generateMatchImage() {
   });
   y += LH;
 
-  // Separator
+  // Separator — 只到内容宽度，不到图片边缘
+  const contentRight = xs[colW.length - 1] + colW[colW.length - 1];
   ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 0.8;
-  ctx.beginPath(); ctx.moveTo(PAD, y + LH/2); ctx.lineTo(W - PAD, y + LH/2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(PAD, y + LH/2); ctx.lineTo(contentRight, y + LH/2); ctx.stroke();
   y += LH;
 
   // Data rows
@@ -1266,7 +1267,9 @@ function generateMatchImage() {
     y += LH;
   }
 
-  // Total row
+  // Total row — 上方分隔线同样只到内容宽度
+  ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 0.8;
+  ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(contentRight, y); ctx.stroke();
   ctx.fillStyle = '#e5e7eb'; ctx.fillRect(0, y, W, LH);
   ctx.fillStyle = '#111111'; ctx.font = `bold ${FS}px monospace`;
   ctx.textBaseline = 'middle';

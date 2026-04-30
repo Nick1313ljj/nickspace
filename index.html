@@ -319,7 +319,7 @@
   <div class="table-scroll">
     <table>
       <thead><tr>
-        <th>日期</th><th>单据号</th><th>中奖资料行</th><th>投注类型</th><th class="num">金额</th><th>来源</th>
+        <th>日期</th><th>单据号</th><th>中奖资料行</th><th>投注类型</th><th class="num">金额</th><th>来源</th><th style="text-align:center">选</th>
       </tr></thead>
       <tbody id="resultBody"></tbody>
     </table>
@@ -1057,13 +1057,19 @@ function renderMatchTable(rows) {
   const tbody=document.getElementById('resultBody');
   tbody.innerHTML='';
   if (!rows.length) {
-    tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">无匹配结果</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted)">无匹配结果</td></tr>`;
     return;
   }
-  for (const r of rows) {
+  for (const [idx, r] of rows.entries()) {
     const src=r._grp==='A'?`<span style="color:var(--ali-a);font-size:10px">Aliapos</span>`:`<span style="color:var(--ali-b);font-size:10px">Alibaba</span>`;
+    // 金额小数点对齐（统一两位小数）
+    let amtDisplay = '—';
+    if (r.amount) {
+      const n = parseFloat(r.amount);
+      amtDisplay = isNaN(n) ? r.amount : n.toFixed(2);
+    }
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td class="date">${r.dateA}</td><td class="docno">${r.docNo}</td><td>${boldParens(r.line)}</td><td style="color:var(--muted)">${esc(r.betType)}</td><td class="amt">${r.amount||'—'}</td><td>${src}</td>`;
+    tr.innerHTML=`<td class="date">${r.dateA}</td><td class="docno">${r.docNo}</td><td>${boldParens(r.line)}</td><td style="color:var(--muted)">${esc(r.betType)}</td><td class="amt" style="font-family:monospace">${amtDisplay}</td><td>${src}</td><td style="text-align:center"><input type="checkbox" class="match-select" data-idx="${idx}" checked style="width:16px;height:16px;cursor:pointer"></td>`;
     tbody.appendChild(tr);
   }
 }
@@ -1176,17 +1182,24 @@ function generateImage2() { generateImage(true); }
 function generateMatchImage() {
   if (!matchedRows.length) { showToast('没有匹配结果'); return; }
 
+  // 只取打勾的行
+  const checkboxes = document.querySelectorAll('.match-select:checked');
+  const selectedIndices = new Set([...checkboxes].map(c => parseInt(c.dataset.idx)));
+  const selectedRows = matchedRows.filter((_, i) => selectedIndices.has(i));
+  if (!selectedRows.length) { showToast('请至少勾选一行'); return; }
+
   const DPR = window.devicePixelRatio || 2;
   const FS  = 13, LH = 24, PAD = 14, CELL = 6;
 
-  // Columns: 日期, 单据号, 中奖资料行, 投注类型, 金额, 来源
   const headers = ['Date', 'Doc', 'Record', 'Type', 'Amt'];
-  const colData  = matchedRows.map(r => {
+  let totalAmt = 0;
+  const colData = selectedRows.map(r => {
     let amt = parseFloat(r.amount) || 0;
     if (r._grp === 'B' && amt) amt = Math.round((amt / 1.05) * 100) / 100;
+    totalAmt += amt;
     return [
       r.dateA, r.docNo, r.line.replace(/\s*\(\d{5}\)\s*/g, ' ').trim(), r.betType,
-      amt ? (amt % 1 === 0 ? String(amt) : amt.toFixed(2)) : '—'
+      amt ? amt.toFixed(2) : '—'   // 统一两位小数
     ];
   });
 
@@ -1206,7 +1219,7 @@ function generateMatchImage() {
   });
 
   const W = colW.reduce((a, b) => a + b, 0) + PAD * 2;
-  const H = (1 + 1 + matchedRows.length) * LH + PAD * 2;
+  const H = (1 + 1 + selectedRows.length + 1) * LH + PAD * 2; // +1 for Total row
 
   const canvas = document.getElementById('matchCanvas');
   canvas.width  = W * DPR; canvas.height = H * DPR;
@@ -1252,6 +1265,17 @@ function generateMatchImage() {
     });
     y += LH;
   }
+
+  // Total row
+  ctx.fillStyle = '#e5e7eb'; ctx.fillRect(0, y, W, LH);
+  ctx.fillStyle = '#111111'; ctx.font = `bold ${FS}px monospace`;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'right';
+  ctx.fillText('Total', xs[4] - CELL, y + LH / 2);
+  ctx.fillStyle = '#00a87a';
+  ctx.textAlign = 'left';
+  ctx.fillText(totalAmt.toFixed(2), xs[4] + CELL, y + LH / 2);
+  y += LH;
 
   // Border
   ctx.strokeStyle = '#d1d5db'; ctx.lineWidth = 1;

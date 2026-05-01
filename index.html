@@ -1567,13 +1567,21 @@ function buildWAText(rows, noDiscount) {
   const pad=(s,n)=>String(s).padEnd(n);
   const padL=(s,n)=>String(s).padStart(n);
   const C1=10,C2=8,C3=6;
+  // 线只到实际数字最右边，不超出内容宽度
+  // 计算最长数据行的宽度来决定线的长度
+  let maxLineLen = ('Date').length + ('RM').length + 2;
+  for (const r of sorted) {
+    const len = String(r.date).length + String(r.rm||'').length + 2 + (hasSGD ? String(r.sgd||'').length + 1 : 0);
+    if (len > maxLineLen) maxLineLen = len;
+  }
+  const sepLen = Math.min(maxLineLen, C1 + C2 + (hasSGD ? C3 : 0));
   const lines=[];
 
   lines.push(pad('Date',C1)+pad('RM',C2)+(hasSGD?'SGD':''));
-  lines.push('─'.repeat(C1+C2+(hasSGD?C3:0)));
+  lines.push('─'.repeat(sepLen));
   for (const r of sorted)
     lines.push(pad(r.date,C1)+padL(r.rm||'',C2-2).padEnd(C2)+(hasSGD?padL(r.sgd||'',C3):''));
-  lines.push('─'.repeat(C1+C2+(hasSGD?C3:0)));
+  lines.push('─'.repeat(sepLen));
   lines.push(pad('Total',C1)+padL(tRM,C2)+(hasSGD?padL(tSGD,C3):''));
   if (!noDiscount) {
     lines.push(pad('Disc',C1)+padL('-'+discRM,C2)+(hasSGD?padL('-'+discSGD,C3):''));

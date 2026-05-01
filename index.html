@@ -1399,13 +1399,14 @@ function generateImage(noDiscount = false) {
     ctx.fillText(String(text), x, y + LH / 2);
   }
 
-  // Helper: draw separator line
+  // Helper: draw separator line — only to content width (not full image width)
+  const contentW = PAD + COL[0] + COL[1]; // 只到 RM 列右边缘
   function sep(y) {
     ctx.strokeStyle = '#9ca3af';
     ctx.lineWidth = 0.8;
     ctx.beginPath();
     ctx.moveTo(PAD, y + LH / 2);
-    ctx.lineTo(W - PAD, y + LH / 2);
+    ctx.lineTo(contentW, y + LH / 2);
     ctx.stroke();
   }
 

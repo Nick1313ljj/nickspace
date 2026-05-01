@@ -1434,13 +1434,14 @@ function generateImage(noDiscount = false) {
     PAD + COL_DATE + COL_RM + COL_SGD,
   ];
 
-  // Separator line — spans exactly the content width
+  // Separator line — only spans Date + RM (+ SGD if exists), NOT Strike column
+  const sepRight = PAD + COL_DATE + COL_RM + COL_SGD;
   function sep(y) {
     ctx.strokeStyle = '#9ca3af';
     ctx.lineWidth = 0.8;
     ctx.beginPath();
     ctx.moveTo(PAD, y + LH / 2);
-    ctx.lineTo(W - PAD, y + LH / 2);
+    ctx.lineTo(sepRight, y + LH / 2);
     ctx.stroke();
   }
 

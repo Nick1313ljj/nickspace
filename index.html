@@ -1346,25 +1346,52 @@ function generateImage(noDiscount = false) {
   const PAD   = 16;        // outer padding
   const CELL  = 8;         // inner cell padding
 
-  // Column widths (logical px) — wide enough for content
-  const COL = [140, 56, 56, 0]; // date/label, RM, SGD, strike (auto)
-
   // Use offscreen canvas to measure
   const tmpC  = document.createElement('canvas');
   const tmpCx = tmpC.getContext('2d');
   tmpCx.font  = `bold ${FS}px monospace`;
 
-  // Measure max strike width
-  let maxStrike = 100;
+  // Check if any row has SGD or Strike data
+  const hasSGD    = dataRows.some(r => r[2] && r[2].trim());
+  const hasStrike = dataRows.some(r => r[3] && r[3].trim());
+
+  // Measure max label width for date column
+  let maxLabel = tmpCx.measureText('Date').width;
   for (const r of dataRows) {
     tmpCx.font = `${FS}px monospace`;
-    const w = tmpCx.measureText(r[3]).width;
-    if (w > maxStrike) maxStrike = w;
+    const w = tmpCx.measureText(r[0]).width;
+    if (w > maxLabel) maxLabel = w;
   }
-  COL[3] = Math.ceil(maxStrike) + CELL * 2 + 16;
 
-  const totalCols = COL.reduce((a, b) => a + b, 0);
-  const W = totalCols + PAD * 2;
+  // Measure max RM/SGD number width
+  let maxRM = tmpCx.measureText('RM').width;
+  for (const r of dataRows) {
+    tmpCx.font = `${FS}px monospace`;
+    const w = tmpCx.measureText(r[1]).width;
+    if (w > maxRM) maxRM = w;
+  }
+  for (const s of summaryRows) {
+    const w = tmpCx.measureText(s.rm||'').width;
+    if (w > maxRM) maxRM = w;
+  }
+
+  // Measure max strike width (only if needed)
+  let maxStrike = 0;
+  if (hasStrike) {
+    for (const r of dataRows) {
+      tmpCx.font = `${FS}px monospace`;
+      const w = tmpCx.measureText(r[3]).width;
+      if (w > maxStrike) maxStrike = w;
+    }
+  }
+
+  // Build active columns only
+  const COL_DATE   = Math.max(Math.ceil(maxLabel), 100) + CELL * 2;
+  const COL_RM     = Math.max(Math.ceil(maxRM), 40)   + CELL * 2;
+  const COL_SGD    = hasSGD    ? COL_RM   : 0;
+  const COL_STRIKE = hasStrike ? Math.ceil(maxStrike) + CELL * 2 + 16 : 0;
+
+  const W = PAD * 2 + COL_DATE + COL_RM + COL_SGD + COL_STRIKE;
 
   // Count rows: header + sep + data + sep + summary
   const totalLines = 1 + 1 + dataRows.length + 1 + summaryRows.length;
@@ -1399,33 +1426,32 @@ function generateImage(noDiscount = false) {
     ctx.fillText(String(text), x, y + LH / 2);
   }
 
-  // Helper: draw separator line — only to content width (not full image width)
-  const contentW = PAD + COL[0] + COL[1]; // 只到 RM 列右边缘
+  // Column x positions (left-aligned)
+  const xs = [
+    PAD,
+    PAD + COL_DATE,
+    PAD + COL_DATE + COL_RM,
+    PAD + COL_DATE + COL_RM + COL_SGD,
+  ];
+
+  // Separator line — spans exactly the content width
   function sep(y) {
     ctx.strokeStyle = '#9ca3af';
     ctx.lineWidth = 0.8;
     ctx.beginPath();
     ctx.moveTo(PAD, y + LH / 2);
-    ctx.lineTo(contentW, y + LH / 2);
+    ctx.lineTo(W - PAD, y + LH / 2);
     ctx.stroke();
   }
-
-  // Column x positions (left-aligned)
-  const xs = [
-    PAD,
-    PAD + COL[0],
-    PAD + COL[0] + COL[1],
-    PAD + COL[0] + COL[1] + COL[2],
-  ];
 
   let y = PAD;
 
   // Header row
   rowBg(y, '#e5e7eb');
-  cell('Date', xs[0] + CELL,              y, 'left',  '#4b5563', true);
-  cell('RM',   xs[1] + COL[1] - CELL,     y, 'right', '#4b5563', true);
-  cell('SGD',  xs[2] + COL[2] - CELL,     y, 'right', '#4b5563', true);
-  cell('Stk/Kena', xs[3] + CELL, y, 'left', '#4b5563', true);
+  cell('Date', xs[0] + CELL,                y, 'left',  '#4b5563', true);
+  cell('RM',   xs[1] + COL_RM - CELL,       y, 'right', '#4b5563', true);
+  if (hasSGD)    cell('SGD',      xs[2] + COL_SGD - CELL,    y, 'right', '#4b5563', true);
+  if (hasStrike) cell('Stk/Kena', xs[3] + CELL,              y, 'left',  '#4b5563', true);
   y += LH;
 
   // Separator
@@ -1434,10 +1460,10 @@ function generateImage(noDiscount = false) {
   // Data rows
   for (const [i, r] of dataRows.entries()) {
     if (i % 2 === 1) rowBg(y, '#f9fafb');
-    cell(r[0], xs[0] + CELL,           y, 'left',  '#374151');
-    cell(r[1], xs[1] + COL[1] - CELL,  y, 'right', '#374151');
-    cell(r[2], xs[2] + COL[2] - CELL,  y, 'right', '#374151');
-    cell(r[3], xs[3] + CELL,           y, 'left',  '#111111', true);
+    cell(r[0], xs[0] + CELL,              y, 'left',  '#374151');
+    cell(r[1], xs[1] + COL_RM - CELL,     y, 'right', '#374151');
+    if (hasSGD)    cell(r[2], xs[2] + COL_SGD - CELL,    y, 'right', '#374151');
+    if (hasStrike) cell(r[3], xs[3] + CELL,              y, 'left',  '#111111', true);
     y += LH;
   }
 
@@ -1473,13 +1499,13 @@ function generateImage(noDiscount = false) {
     ctx.textAlign = 'left';
     ctx.fillText(s.zh, xs[0] + CELL + enW + spaceW, y + LH / 2);
 
-    // RM value — right-aligned in RM column (xs[1] to xs[1]+COL[1])
+    // RM value — right-aligned in RM column
     ctx.font = `bold ${FS}px monospace`;
     ctx.textAlign = 'right';
-    if (s.rm) ctx.fillText(s.rm, xs[1] + COL[1] - CELL, y + LH / 2);
+    if (s.rm) ctx.fillText(s.rm, xs[1] + COL_RM - CELL, y + LH / 2);
 
-    // SGD value — right-aligned in SGD column (xs[2] to xs[2]+COL[2])
-    if (s.sgd) ctx.fillText(s.sgd, xs[2] + COL[2] - CELL, y + LH / 2);
+    // SGD value — only if SGD column exists
+    if (hasSGD && s.sgd) ctx.fillText(s.sgd, xs[2] + COL_SGD - CELL, y + LH / 2);
 
     y += LH;
   }

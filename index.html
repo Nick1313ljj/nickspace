@@ -1305,7 +1305,7 @@ function generateImage(noDiscount = false) {
   if (!rows.length) { showToast('没有数据'); return; }
 
   const { rmMap, sgdMap } = buildStrikeMap(matchedRows);
-  const sorted = [...rows].sort((a, b) => a.date.localeCompare(b.date));
+  const sorted = [...rows].sort((a, b) => dateToSortKey(a.date).localeCompare(dateToSortKey(b.date)));
   const tRM  = rows.reduce((s, r) => s + r.rm, 0);
   const tSGD = rows.reduce((s, r) => s + r.sgd, 0);
   const discRM  = Math.floor(tRM  / 10);

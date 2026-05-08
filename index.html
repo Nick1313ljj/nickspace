@@ -961,18 +961,18 @@ function parseAforGT(text) {
     }
 
     let gtAmt=null, currency='RM'; // Default always RM unless explicitly stated
-    const gtLines = lines.filter(l => /GT[=:]/i.test(l));
-    const sgdGT = gtLines.find(l => /S[GD]{2}/i.test(l) && /GT[=:]/i.test(l));
+    const gtLines = lines.filter(l => /GT[=:\s]/i.test(l));
+    const sgdGT = gtLines.find(l => /S[GD]{2}/i.test(l) && /GT[=:\s]/i.test(l));
     const myrGT = gtLines.find(l => /MYR/i.test(l));
     if (sgdGT) {
-      const m = sgdGT.match(/GT[=:]([\d.]+)/i);
+      const m = sgdGT.match(/GT[=:\s]\s*([\d.]+)/i);
       if (m) { gtAmt=parseFloat(m[1]); currency='SGD'; }
     } else if (myrGT) {
-      const m = myrGT.match(/GT[=:]([\d.]+)/i);
+      const m = myrGT.match(/GT[=:\s]\s*([\d.]+)/i);
       if (m) { gtAmt=parseFloat(m[1]); currency='RM'; }
     } else {
       for (const line of lines) {
-        let m=line.match(/GT[=:](\d+(?:\.\d+)?)/i);
+        let m=line.match(/GT[=:\s]\s*(\d+(?:\.\d+)?)/i);
         if (!m) m=line.match(/\bT\((\d+(?:\.\d+)?)\)/i);
         if (m) {
           gtAmt=parseFloat(m[1]);
